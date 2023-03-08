@@ -14,6 +14,7 @@ import (
 	"estimator/storage/mysql"
 
 	"github.com/beeker1121/httprouter"
+	_ "github.com/go-sql-driver/mysql"
 )
 
 func main() {
@@ -34,6 +35,18 @@ func main() {
 	cfg.JWTSecret = os.Getenv("JWT_SECRET")
 
 	// TODO: Add logger.
+
+	// Connect to the MySQL database.
+	db, err := sql.Open("mysql", cfg.DBUser+":"+cfg.DBPass+"@tcp("+cfg.DBHost+":"+cfg.DBPort+")/"+cfg.DBName+"?parseTime=true")
+	if err != nil {
+		panic(err)
+	}
+	defer db.Close()
+
+	// Test database connection.
+	if err := db.Ping(); err != nil {
+		panic(err)
+	}
 
 	// Create a new MySQL storage implementation.
 	store := mysql.New(&sql.DB{})
