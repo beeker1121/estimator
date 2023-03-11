@@ -2,6 +2,7 @@ package form
 
 import (
 	"estimator/storage"
+	"estimator/storage/form"
 	"estimator/types"
 )
 
@@ -19,7 +20,23 @@ func New(s *storage.Storage) *Service {
 
 // Create creates a new form.
 func (s *Service) Create(f *types.Form) (*types.Form, error) {
-	return &types.Form{}, nil
+	var err error
+
+	// Map to storage type.
+	sf := &form.Form{
+		Modules: f.Modules,
+	}
+
+	// Create in storage.
+	sf, err = s.s.Form.Create(sf)
+	if err != nil {
+		return nil, err
+	}
+
+	// Update type.
+	f.ID = sf.ID
+
+	return f, nil
 }
 
 // GetByID gets a form by the given ID.

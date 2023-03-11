@@ -49,7 +49,7 @@ func main() {
 	}
 
 	// Create a new MySQL storage implementation.
-	store := mysql.New(&sql.DB{})
+	store := mysql.New(db)
 
 	// Create new services.
 	serv := services.New(store)

@@ -2,5 +2,6 @@ package types
 
 // Form defines a form.
 type Form struct {
-	ID string
+	ID      string
+	Modules interface{}
 }

@@ -2,3 +2,5 @@ github.com/beeker1121/httprouter v0.0.0-20160817010721-ee8b3818a7f5 h1:GSp5Lndrn
 github.com/beeker1121/httprouter v0.0.0-20160817010721-ee8b3818a7f5/go.mod h1:F8IJlloRMY1sNitZZ1j8kK4GlStBnk+hNIXiSrQd/yc=
 github.com/go-sql-driver/mysql v1.7.0 h1:ueSltNNllEqE3qcWBTD0iQd3IpL/6U+mJxLkazJ7YPc=
 github.com/go-sql-driver/mysql v1.7.0/go.mod h1:OXbVy3sEdcQ2Doequ6Z5BW6fXNQTmx+9S1MCJN5yJMI=
+github.com/google/uuid v1.3.0 h1:t6JiXgmwXMjEs8VusXIJk2BXHsn+wx8BZdTaoZ5fu7I=
+github.com/google/uuid v1.3.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
