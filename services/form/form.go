@@ -53,8 +53,8 @@ func (s *Service) GetByID(id string) (*types.Form, error) {
 	return &types.Form{}, nil
 }
 
-// InterfaceToModules takes in a map[string]interface{} and converts it to
-// individual modules types.
+// InterfaceToModules takes in an []interface{} and converts it to individual
+// module types.
 func (s *Service) InterfaceToModules(i []interface{}) ([]types.Module, error) {
 	// Create modules slice.
 	modules := []types.Module{}
@@ -67,6 +67,9 @@ func (s *Service) InterfaceToModules(i []interface{}) ([]types.Module, error) {
 		// Switch type.
 		switch m["type"] {
 		case "short-text":
+			// TODO: Should probably fully map this, checking if
+			//       each field exists in the map and setting it
+			//       directly.
 			module := &types.ShortText{
 				Type: m["type"].(string),
 			}
