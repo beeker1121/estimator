@@ -13,7 +13,10 @@ import (
 )
 
 // Form defines the form request/response.
-type Form types.Form
+type Form struct {
+	ID      string        `json:"id"`
+	Modules []interface{} `json:"modules"`
+}
 
 // New creates a new form handler.
 func New(ac *apictx.Context, router *httprouter.Router) {
@@ -32,9 +35,16 @@ func HandleCreateForm(ac *apictx.Context) http.HandlerFunc {
 			return
 		}
 
+		// Map modules interface to module types.
+		modules, err := ac.Services.Form.InterfaceToModules(f.Modules)
+		if err != nil {
+			w.Write([]byte("error converting interface to modules"))
+			return
+		}
+
 		// Create a new form.
 		sf, err := ac.Services.Form.Create(&types.Form{
-			Modules: f.Modules,
+			Modules: modules,
 		})
 		if err != nil {
 			w.Write([]byte("error creating form"))
@@ -43,8 +53,18 @@ func HandleCreateForm(ac *apictx.Context) http.HandlerFunc {
 
 		// Create a new form.
 		res := Form{
-			ID:      sf.ID,
-			Modules: sf.Modules,
+			ID: sf.ID,
+		}
+
+		// Get JSON for modules.
+		modulesJSON, err := json.Marshal(sf.Modules)
+		if err != nil {
+			w.Write([]byte("error marshaling modules to JSON"))
+			return
+		}
+		if err := json.Unmarshal(modulesJSON, &res.Modules); err != nil {
+			w.Write([]byte("error unmarshaling modules to interface"))
+			return
 		}
 
 		// Respond with JSON.

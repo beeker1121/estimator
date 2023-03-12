@@ -8,6 +8,21 @@ type ShortText struct {
 	Properties ShortTextProperties `json:"properties"`
 }
 
+// GetType implements the Module interface.
+func (st *ShortText) GetType() string {
+	return st.Type
+}
+
+// Validate implements the Module interface.
+func (st *ShortText) Validate() error {
+	// Check type.
+	if err := ValidateType(st.Type); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // ShortTextProperties defines the short text module properties.
 type ShortTextProperties struct {
 	Label       string `json:"label"`
