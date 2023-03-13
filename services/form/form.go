@@ -64,15 +64,49 @@ func (s *Service) InterfaceToModules(i []interface{}) ([]types.Module, error) {
 		// Convert to map[string]interface{}.
 		m := v.(map[string]interface{})
 
+		// Get type.
+		t, ok := m["type"]
+		if !ok {
+			return nil, errors.New("missing type")
+		}
+
 		// Switch type.
-		switch m["type"] {
+		switch t {
 		case "short-text":
 			// TODO: Should probably fully map this, checking if
 			//       each field exists in the map and setting it
 			//       directly.
-			module := &types.ShortText{
-				Type: m["type"].(string),
+			module := &types.ShortText{}
+
+			// Handle type.
+			typeStr, ok := t.(string)
+			if !ok {
+				return nil, errors.New("invalid type property, must be string")
 			}
+			module.Type = typeStr
+
+			// Handle properties.
+			p, ok := m["properties"]
+			if !ok {
+				return nil, errors.New("missing properties")
+			}
+			pm := p.(map[string]interface{})
+
+			properties := types.ShortTextProperties{}
+
+			// Handle property label.
+			label, ok := pm["label"]
+			if !ok {
+				return nil, errors.New("missing property label")
+			}
+			labelStr, ok := label.(string)
+			if !ok {
+				return nil, errors.New("invalid property label, must be string")
+			}
+			properties.Label = labelStr
+
+			// Set the properties.
+			module.Properties = properties
 
 			modules = append(modules, module)
 		default:
