@@ -29,7 +29,41 @@ const (
 INSERT INTO forms (id, modules)
 VALUES (?, ?)
 `
+
+	// stmtGetByID defines the SQL statement to
+	// get a form from the datbase.
+	stmtGetByID = `
+SELECT * FROM forms
+WHERE id=?
+`
 )
+
+// Form defines a form.
+type Form struct {
+	ID      string
+	Modules Modules
+}
+
+// Modules defines form modules.
+type Modules struct {
+	Data interface{}
+}
+
+// Value implements the driver interface.
+func (m Modules) Value() (driver.Value, error) {
+	b, err := json.Marshal(m.Data)
+	if err != nil {
+		return nil, err
+	}
+
+	return driver.Value(b), nil
+}
+
+// Scan implements the Scanner interface.
+func (m *Modules) Scan(src any) error {
+	val := src.([]uint8)
+	return json.Unmarshal(val, &m.Data)
+}
 
 // Create creates a new form.
 func (db *Database) Create(f *form.Form) (*form.Form, error) {
@@ -54,26 +88,28 @@ func (db *Database) Create(f *form.Form) (*form.Form, error) {
 
 // GetByID gets a form by the given ID.
 func (db *Database) GetByID(id string) (*form.Form, error) {
-	return &form.Form{}, nil
-}
+	// Create a new Form.
+	f := &Form{
+		Modules: Modules{},
+	}
 
-// Form defines a form.
-type Form struct {
-	ID      string
-	Modules Modules
-}
+	// Execute the query.
+	row := db.db.QueryRow(stmtGetByID, id)
 
-// Modules defines form modules.
-type Modules struct {
-	Data interface{}
-}
-
-// Value implements the driver interface.
-func (m Modules) Value() (driver.Value, error) {
-	b, err := json.Marshal(m.Data)
-	if err != nil {
+	// Map columns to form.
+	err := row.Scan(&f.ID, &f.Modules)
+	switch {
+	case err == sql.ErrNoRows:
+		return nil, form.ErrFormNotFound
+	case err != nil:
 		return nil, err
 	}
 
-	return driver.Value(b), nil
+	// Map to storage form type.
+	gf := &form.Form{
+		ID:      f.ID,
+		Modules: f.Modules.Data,
+	}
+
+	return gf, nil
 }

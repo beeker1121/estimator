@@ -50,7 +50,25 @@ func (s *Service) Create(f *types.Form) (*types.Form, error) {
 
 // GetByID gets a form by the given ID.
 func (s *Service) GetByID(id string) (*types.Form, error) {
-	return &types.Form{}, nil
+	// Try to pull this form from the database.
+	dbf, err := s.s.Form.GetByID(id)
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert interface to modules.
+	m, err := s.InterfaceToModules(dbf.Modules.([]interface{}))
+	if err != nil {
+		return nil, err
+	}
+
+	// Create a new Form.
+	f := &types.Form{
+		ID:      dbf.ID,
+		Modules: m,
+	}
+
+	return f, nil
 }
 
 // InterfaceToModules takes in an []interface{} and converts it to individual

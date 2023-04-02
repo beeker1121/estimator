@@ -92,7 +92,11 @@ func HandleGetForm(ac *apictx.Context) http.HandlerFunc {
 
 		// Map to API form response.
 		f := &Form{
-			ID: sf.ID,
+			ID:      sf.ID,
+			Modules: []interface{}{},
+		}
+		for _, v := range sf.Modules {
+			f.Modules = append(f.Modules, v)
 		}
 
 		// Respond with JSON.
