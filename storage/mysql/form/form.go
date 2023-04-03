@@ -36,6 +36,14 @@ VALUES (?, ?)
 SELECT * FROM forms
 WHERE id=?
 `
+
+	// stmtUpdateByID defines the SQL statement
+	// to update a form by the given ID.
+	stmtUpdateByID = `
+UPDATE forms
+SET modules=?
+WHERE id=?
+`
 )
 
 // Form defines a form.
@@ -112,4 +120,22 @@ func (db *Database) GetByID(id string) (*form.Form, error) {
 	}
 
 	return gf, nil
+}
+
+// UpdateByID a form by the given ID.
+func (db *Database) UpdateByID(id string, f *form.Form) (*form.Form, error) {
+	// Map to local Form type.
+	lf := &Form{
+		ID: id,
+		Modules: Modules{
+			Data: f.Modules,
+		},
+	}
+
+	// Execute the query.
+	if _, err := db.db.Exec(stmtUpdateByID, lf.Modules, lf.ID); err != nil {
+		return nil, err
+	}
+
+	return f, nil
 }

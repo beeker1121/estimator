@@ -71,6 +71,32 @@ func (s *Service) GetByID(id string) (*types.Form, error) {
 	return f, nil
 }
 
+// UpdateByIDAndMemberID updates a form by the given ID and member ID.
+func (s *Service) UpdateByIDAndMemberID(id, memberID string, f *types.Form) (*types.Form, error) {
+	var err error
+
+	// Loop through the modules.
+	for _, module := range f.Modules {
+		// Validate the module.
+		if err := module.Validate(); err != nil {
+			return nil, err
+		}
+	}
+
+	// Map to storage type.
+	sf := &form.Form{
+		Modules: f.Modules,
+	}
+
+	// Create in storage.
+	sf, err = s.s.Form.UpdateByID(id, sf)
+	if err != nil {
+		return nil, err
+	}
+
+	return f, nil
+}
+
 // InterfaceToModules takes in an []interface{} and converts it to individual
 // module types.
 func (s *Service) InterfaceToModules(i []interface{}) ([]types.Module, error) {
