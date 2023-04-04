@@ -30,6 +30,7 @@ type ShortTextProperties struct {
 	Tooltip     string `json:"tooltip"`
 	Required    bool   `json:"required"`
 	Placeholder string `json:"placeholder"`
+	Default     string `json:"default"`
 	Suffix      string `json:"suffix"`
 	WidthType   bool   `json:"width_type"`
 	Width       int    `json:"width"`

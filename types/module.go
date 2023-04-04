@@ -9,6 +9,9 @@ import (
 // ModuleTypes defines the available types for a module.
 var ModuleTypes []string = []string{
 	"short-text",
+	"multiple-choice",
+	"heading",
+	"full-name",
 }
 
 // Module defines the module interface.
