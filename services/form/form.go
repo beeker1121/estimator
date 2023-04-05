@@ -2,9 +2,12 @@ package form
 
 import (
 	"errors"
+
 	"estimator/storage"
 	"estimator/storage/form"
 	"estimator/types"
+
+	"github.com/google/uuid"
 )
 
 // Service defines the form service.
@@ -23,16 +26,23 @@ func New(s *storage.Storage) *Service {
 func (s *Service) Create(f *types.Form) (*types.Form, error) {
 	var err error
 
+	// Set ID.
+	f.ID = uuid.NewString()
+
 	// Loop through the modules.
-	for _, module := range f.Modules {
+	for i, module := range f.Modules {
 		// Validate the module.
 		if err := module.Validate(); err != nil {
 			return nil, err
 		}
+
+		// Set ID.
+		f.Modules[i].SetID(uuid.NewString())
 	}
 
 	// Map to storage type.
 	sf := &form.Form{
+		ID:      f.ID,
 		Modules: f.Modules,
 	}
 
@@ -41,9 +51,6 @@ func (s *Service) Create(f *types.Form) (*types.Form, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	// Update type.
-	f.ID = sf.ID
 
 	return f, nil
 }
@@ -85,6 +92,7 @@ func (s *Service) UpdateByIDAndMemberID(id, memberID string, f *types.Form) (*ty
 
 	// Map to storage type.
 	sf := &form.Form{
+		ID:      id,
 		Modules: f.Modules,
 	}
 
@@ -426,6 +434,280 @@ func (s *Service) InterfaceToModules(i []interface{}) ([]types.Module, error) {
 
 			}
 			properties.Options = optionsType
+
+			// Set the properties.
+			module.Properties = properties
+
+			modules = append(modules, module)
+		case "heading":
+			// TODO: Should probably fully map this, checking if
+			//       each field exists in the map and setting it
+			//       directly.
+			module := &types.Heading{}
+
+			// Handle type.
+			typeStr, ok := t.(string)
+			if !ok {
+				return nil, errors.New("invalid type property, must be a string")
+			}
+			module.Type = typeStr
+
+			// Handle name.
+			name, ok := m["name"]
+			if !ok {
+				return nil, errors.New("missing name for module")
+			}
+			nameStr, ok := name.(string)
+			if !ok {
+				return nil, errors.New("invalid module name, must be a string")
+			}
+			module.Name = nameStr
+
+			// Handle properties.
+			p, ok := m["properties"]
+			if !ok {
+				return nil, errors.New("missing properties")
+			}
+			pm := p.(map[string]interface{})
+
+			properties := types.HeadingProperties{}
+
+			// Handle property title.
+			title, ok := pm["title"]
+			if !ok {
+				return nil, errors.New("missing property title")
+			}
+			titleStr, ok := title.(string)
+			if !ok {
+				return nil, errors.New("invalid property title, must be a string")
+			}
+			properties.Title = titleStr
+
+			// Handle property sublabel.
+			sublabel, ok := pm["sublabel"]
+			if !ok {
+				return nil, errors.New("missing property sublabel")
+			}
+			sublabelStr, ok := sublabel.(string)
+			if !ok {
+				return nil, errors.New("invalid property sublabel, must be a string")
+			}
+			properties.Sublabel = sublabelStr
+
+			// Handle property size.
+			size, ok := pm["size"]
+			if !ok {
+				return nil, errors.New("missing property size")
+			}
+			sizeStr, ok := size.(string)
+			if !ok {
+				return nil, errors.New("invalid property size, must be a string")
+			}
+			properties.Size = sizeStr
+
+			// Handle property alignment.
+			alignment, ok := pm["alignment"]
+			if !ok {
+				return nil, errors.New("missing property alignment")
+			}
+			alignmentStr, ok := alignment.(string)
+			if !ok {
+				return nil, errors.New("invalid property alignment, must be a string")
+			}
+			properties.Alignment = alignmentStr
+
+			// Handle property imageAlignment.
+			imageAlignment, ok := pm["image_alignment"]
+			if !ok {
+				return nil, errors.New("missing property image alignment")
+			}
+			imageAlignmentStr, ok := imageAlignment.(string)
+			if !ok {
+				return nil, errors.New("invalid property image alignment, must be string")
+			}
+			properties.ImageAlignment = imageAlignmentStr
+
+			// Handle property verticalAlignment.
+			verticalAlignment, ok := pm["vertical_alignment"]
+			if !ok {
+				return nil, errors.New("missing property vertical alignment")
+			}
+			verticalAlignmentStr, ok := verticalAlignment.(string)
+			if !ok {
+				return nil, errors.New("invalid property vertical alignment, must be string")
+			}
+			properties.VerticalAlignment = verticalAlignmentStr
+
+			// TODO: Handle property image.
+
+			// Handle property imageWidth.
+			imageWidth, ok := pm["image_width"]
+			if !ok {
+				return nil, errors.New("missing property image width")
+			}
+			imageWidthFloat64, ok := imageWidth.(float64)
+			if !ok {
+				return nil, errors.New("invalid property image width, must be an integer")
+			}
+			properties.ImageWidth = int(imageWidthFloat64)
+
+			// Set the properties.
+			module.Properties = properties
+
+			modules = append(modules, module)
+		case "full-name":
+			// TODO: Should probably fully map this, checking if
+			//       each field exists in the map and setting it
+			//       directly.
+			module := &types.FullName{}
+
+			// Handle type.
+			typeStr, ok := t.(string)
+			if !ok {
+				return nil, errors.New("invalid type property, must be a string")
+			}
+			module.Type = typeStr
+
+			// Handle name.
+			name, ok := m["name"]
+			if !ok {
+				return nil, errors.New("missing name for module")
+			}
+			nameStr, ok := name.(string)
+			if !ok {
+				return nil, errors.New("invalid module name, must be a string")
+			}
+			module.Name = nameStr
+
+			// Handle properties.
+			p, ok := m["properties"]
+			if !ok {
+				return nil, errors.New("missing properties")
+			}
+			pm := p.(map[string]interface{})
+
+			properties := types.FullNameProperties{}
+
+			// Handle property label.
+			label, ok := pm["label"]
+			if !ok {
+				return nil, errors.New("missing property label")
+			}
+			labelStr, ok := label.(string)
+			if !ok {
+				return nil, errors.New("invalid property label, must be a string")
+			}
+			properties.Label = labelStr
+
+			// Handle property tooltip.
+			tooltip, ok := pm["tooltip"]
+			if !ok {
+				return nil, errors.New("missing property tooltip")
+			}
+			tooltipStr, ok := tooltip.(string)
+			if !ok {
+				return nil, errors.New("invalid property tooltip, must be a string")
+			}
+			properties.Tooltip = tooltipStr
+
+			// Handle property required.
+			required, ok := pm["required"]
+			if !ok {
+				return nil, errors.New("missing property required")
+			}
+			requiredBool, ok := required.(bool)
+			if !ok {
+				return nil, errors.New("invalid property required, must be a boolean")
+			}
+			properties.Required = requiredBool
+
+			// Handle property show prefix.
+			showPrefix, ok := pm["show_prefix"]
+			if !ok {
+				return nil, errors.New("missing property show prefix")
+			}
+			showPrefixBool, ok := showPrefix.(bool)
+			if !ok {
+				return nil, errors.New("invalid property show prefix, must be a boolean")
+			}
+			properties.ShowPrefix = showPrefixBool
+
+			// Handle property show middle name.
+			showMiddleName, ok := pm["show_middle_name"]
+			if !ok {
+				return nil, errors.New("missing property show middle name")
+			}
+			showMiddleNameBool, ok := showMiddleName.(bool)
+			if !ok {
+				return nil, errors.New("invalid property show middle name, must be a boolean")
+			}
+			properties.ShowMiddleName = showMiddleNameBool
+
+			// Handle property show suffix.
+			showSuffix, ok := pm["show_suffix"]
+			if !ok {
+				return nil, errors.New("missing property show suffix")
+			}
+			showSuffixBool, ok := showSuffix.(bool)
+			if !ok {
+				return nil, errors.New("invalid property show suffix, must be a boolean")
+			}
+			properties.ShowSuffix = showSuffixBool
+
+			// Handle property prefix sublabel.
+			prefixSublabel, ok := pm["prefix_sublabel"]
+			if !ok {
+				return nil, errors.New("missing property prefix sublabel")
+			}
+			prefixSublabelStr, ok := prefixSublabel.(string)
+			if !ok {
+				return nil, errors.New("invalid property prefix sublabel, must be a string")
+			}
+			properties.PrefixSublabel = prefixSublabelStr
+
+			// Handle property first name sublabel.
+			firstNameSublabel, ok := pm["first_name_sublabel"]
+			if !ok {
+				return nil, errors.New("missing property first name sublabel")
+			}
+			firstNameSublabelStr, ok := firstNameSublabel.(string)
+			if !ok {
+				return nil, errors.New("invalid property first name sublabel, must be a string")
+			}
+			properties.FirstNameSublabel = firstNameSublabelStr
+
+			// Handle property middle name sublabel.
+			middleNameSublabel, ok := pm["middle_name_sublabel"]
+			if !ok {
+				return nil, errors.New("missing property middle name sublabel")
+			}
+			middleNameSublabelStr, ok := middleNameSublabel.(string)
+			if !ok {
+				return nil, errors.New("invalid property middle name sublabel, must be a string")
+			}
+			properties.MiddleNameSublabel = middleNameSublabelStr
+
+			// Handle property last name sublabel.
+			lastNameSublabel, ok := pm["last_name_sublabel"]
+			if !ok {
+				return nil, errors.New("missing property last name sublabel")
+			}
+			lastNameSublabelStr, ok := lastNameSublabel.(string)
+			if !ok {
+				return nil, errors.New("invalid property last name sublabel, must be a string")
+			}
+			properties.LastNameSublabel = lastNameSublabelStr
+
+			// Handle property suffix sublabel.
+			suffixSublabel, ok := pm["suffix_sublabel"]
+			if !ok {
+				return nil, errors.New("missing property suffix sublabel")
+			}
+			suffixSublabelStr, ok := suffixSublabel.(string)
+			if !ok {
+				return nil, errors.New("invalid property suffix sublabel, must be a string")
+			}
+			properties.SuffixSublabel = suffixSublabelStr
 
 			// Set the properties.
 			module.Properties = properties

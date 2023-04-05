@@ -16,6 +16,7 @@ var ModuleTypes []string = []string{
 
 // Module defines the module interface.
 type Module interface {
+	SetID(id string)
 	GetType() string
 	Validate() error
 }

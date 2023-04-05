@@ -6,8 +6,6 @@ import (
 	"encoding/json"
 
 	"estimator/storage/form"
-
-	"github.com/google/uuid"
 )
 
 // Database defines the database.
@@ -77,7 +75,7 @@ func (m *Modules) Scan(src any) error {
 func (db *Database) Create(f *form.Form) (*form.Form, error) {
 	// Map to local Form type.
 	lf := &Form{
-		ID: uuid.NewString(),
+		ID: f.ID,
 		Modules: Modules{
 			Data: f.Modules,
 		},
@@ -87,9 +85,6 @@ func (db *Database) Create(f *form.Form) (*form.Form, error) {
 	if _, err := db.db.Exec(stmtInsert, lf.ID, lf.Modules); err != nil {
 		return nil, err
 	}
-
-	// Set ID.
-	f.ID = lf.ID
 
 	return f, nil
 }

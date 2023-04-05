@@ -8,6 +8,11 @@ type ShortText struct {
 	Properties ShortTextProperties `json:"properties"`
 }
 
+// SetID implements the Module interface.
+func (st *ShortText) SetID(id string) {
+	st.ID = id
+}
+
 // GetType implements the Module interface.
 func (st *ShortText) GetType() string {
 	return st.Type

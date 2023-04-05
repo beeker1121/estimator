@@ -8,6 +8,11 @@ type MultipleChoice struct {
 	Properties MultipleChoiceProperties `json:"properties"`
 }
 
+// SetID implements the Module interface.
+func (mc *MultipleChoice) SetID(id string) {
+	mc.ID = id
+}
+
 // GetType implements the Module interface.
 func (mc *MultipleChoice) GetType() string {
 	return mc.Type
