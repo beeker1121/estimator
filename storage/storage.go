@@ -2,11 +2,13 @@ package storage
 
 import (
 	"estimator/storage/form"
+	"estimator/storage/users"
 )
 
 // Storage defines the storage system.
 type Storage struct {
-	Form form.Database
+	Users users.Database
+	Form  form.Database
 }
 
 // New returns a new storage.

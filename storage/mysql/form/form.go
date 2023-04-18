@@ -29,7 +29,7 @@ VALUES (?, ?)
 `
 
 	// stmtGetByID defines the SQL statement to
-	// get a form from the datbase.
+	// get a form from the database.
 	stmtGetByID = `
 SELECT * FROM forms
 WHERE id=?
