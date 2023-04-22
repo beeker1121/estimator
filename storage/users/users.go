@@ -4,6 +4,7 @@ package users
 type Database interface {
 	Create(u *User) (*User, error)
 	GetByID(id string) (*User, error)
+	GetByEmail(email string) (*User, error)
 	UpdateByID(id string, u *User) (*User, error)
 }
 

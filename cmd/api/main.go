@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"time"
@@ -13,6 +14,7 @@ import (
 	"estimator/services"
 	"estimator/storage/mysql"
 
+	"github.com/beeker1121/creek"
 	"github.com/beeker1121/httprouter"
 	_ "github.com/go-sql-driver/mysql"
 )
@@ -34,7 +36,11 @@ func main() {
 	cfg.APIPort = os.Getenv("API_PORT")
 	cfg.JWTSecret = os.Getenv("JWT_SECRET")
 
-	// TODO: Add logger.
+	// Create new creek logger with 10 MB max file size.
+	//
+	// TODO: Change "./log.log" to "cfg.LogFile" when live.
+	logger := log.New(creek.New("./log.log", 10), "Go Todo API: ", log.Llongfile|log.LstdFlags)
+	logger.Printf("Starting Go Todo API server at %s\n", time.Now().UTC().Format(time.RFC3339))
 
 	// Connect to the MySQL database.
 	db, err := sql.Open("mysql", cfg.DBUser+":"+cfg.DBPass+"@tcp("+cfg.DBHost+":"+cfg.DBPort+")/"+cfg.DBName+"?parseTime=true")
@@ -58,7 +64,7 @@ func main() {
 	router := httprouter.New()
 
 	// Create a new API context.
-	ac := apictx.New(serv)
+	ac := apictx.New(cfg, logger, serv)
 
 	// Create a new v1 API.
 	v1.New(ac, router)

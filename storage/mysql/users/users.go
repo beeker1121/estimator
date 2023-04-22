@@ -27,10 +27,17 @@ VALUES (?, ?, ?)
 `
 
 	// stmtGetByID defines the SQL statement to
-	// get a user from the database.
+	// get a user from the database by ID.
 	stmtGetByID = `
 SELECT * FROM users
 WHERE id=?
+`
+
+	// stmtGetByEmail defines the SQL statement to
+	// get a user from the database by email.
+	stmtGetByEmail = `
+SELECT * FROM users
+WHERE email=?
 `
 
 	// stmtUpdateByID defines the SQL statement
@@ -73,6 +80,33 @@ func (db *Database) GetByID(id string) (*users.User, error) {
 
 	// Execute the query.
 	row := db.db.QueryRow(stmtGetByID, id)
+
+	// Map columns to user.
+	err := row.Scan(&u.ID, &u.Email, &u.Password)
+	switch {
+	case err == sql.ErrNoRows:
+		return nil, users.ErrUserNotFound
+	case err != nil:
+		return nil, err
+	}
+
+	// Map to storage user type.
+	uf := &users.User{
+		ID:       u.ID,
+		Email:    u.Email,
+		Password: u.Password,
+	}
+
+	return uf, nil
+}
+
+// GetByEmail gets a user by the given email.
+func (db *Database) GetByEmail(email string) (*users.User, error) {
+	// Create a new User.
+	u := &User{}
+
+	// Execute the query.
+	row := db.db.QueryRow(stmtGetByEmail, email)
 
 	// Map columns to user.
 	err := row.Scan(&u.ID, &u.Email, &u.Password)

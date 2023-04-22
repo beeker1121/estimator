@@ -6,6 +6,7 @@ import (
 	"estimator/types"
 
 	"github.com/google/uuid"
+	"golang.org/x/crypto/bcrypt"
 )
 
 // Service defines the user service.
@@ -24,6 +25,29 @@ func New(s *storage.Storage) *Service {
 func (s *Service) Create(u *types.User) (*types.User, error) {
 	var err error
 
+	// Check email.
+	if u.Email == "" {
+		return nil, ErrEmailEmpty
+	} else {
+		_, err := s.s.Users.GetByEmail(u.Email)
+		if err == nil {
+			return nil, ErrEmailExists
+		} else if err != nil && err != users.ErrUserNotFound {
+			return nil, err
+		}
+	}
+
+	// Check password.
+	if len(u.Password) < 8 {
+		return nil, ErrPassword
+	}
+
+	// Hash the password.
+	pwHash, err := bcrypt.GenerateFromPassword([]byte(u.Password), bcrypt.DefaultCost)
+	if err != nil {
+		return nil, err
+	}
+
 	// Set ID.
 	u.ID = uuid.NewString()
 
@@ -31,7 +55,7 @@ func (s *Service) Create(u *types.User) (*types.User, error) {
 	su := &users.User{
 		ID:       u.ID,
 		Email:    u.Email,
-		Password: u.Password,
+		Password: string(pwHash),
 	}
 
 	// Create in storage.
