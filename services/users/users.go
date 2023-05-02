@@ -67,6 +67,31 @@ func (s *Service) Create(u *types.User) (*types.User, error) {
 	return u, nil
 }
 
+// Login checks if a user exists in the database and can log in.
+func (s *Service) Login(u *types.User) (*types.User, error) {
+	// Try to pull this user from the database.
+	su, err := s.s.Users.GetByEmail(u.Email)
+	if err == users.ErrUserNotFound {
+		return nil, ErrInvalidLogin
+	} else if err != nil {
+		return nil, err
+	}
+
+	// Validate the password.
+	if err = bcrypt.CompareHashAndPassword([]byte(su.Password), []byte(u.Password)); err != nil {
+		return nil, ErrInvalidLogin
+	}
+
+	// Map to user type.
+	u = &types.User{
+		ID:       su.ID,
+		Email:    su.Email,
+		Password: su.Password,
+	}
+
+	return u, nil
+}
+
 // GetByID gets a user by the given ID.
 func (s *Service) GetByID(id string) (*types.User, error) {
 	// Try to pull this user from the database.
@@ -75,7 +100,7 @@ func (s *Service) GetByID(id string) (*types.User, error) {
 		return nil, err
 	}
 
-	// Create a new User.
+	// Map to user type.
 	u := &types.User{
 		ID:       dbu.ID,
 		Email:    dbu.Email,

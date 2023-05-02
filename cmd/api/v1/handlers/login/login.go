@@ -1,4 +1,4 @@
-package signup
+package login
 
 import (
 	"encoding/json"
@@ -8,6 +8,7 @@ import (
 	"estimator/cmd/api/errors"
 	"estimator/cmd/api/middleware/auth"
 	"estimator/cmd/api/response"
+	"estimator/services/users"
 	"estimator/types"
 
 	"github.com/beeker1121/httprouter"
@@ -18,13 +19,13 @@ type ResultPost struct {
 	Data string `json:"data"`
 }
 
-// New creates the routes for the signup endpoints of the API.
+// New creates the routes for the login endpoints of the API.
 func New(ac *apictx.Context, router *httprouter.Router) {
 	// Handle the routes.
-	router.POST("/api/v1/signup", HandlePost(ac))
+	router.POST("/api/v1/login", HandlePost(ac))
 }
 
-// HandlePost handles the /api/v1/signup POST route of the API.
+// HandlePost handles the /api/v1/login POST route of the API.
 func HandlePost(ac *apictx.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Parse the parameters from the request body.
@@ -34,18 +35,21 @@ func HandlePost(ac *apictx.Context) http.HandlerFunc {
 			return
 		}
 
-		// Create the user.
+		// Try to log this member in.
 		//
 		// TODO: Implement ParamErrors.
-		user, err := ac.Services.Users.Create(user)
-		if err != nil {
-			ac.Logger.Printf("users.Create() service error: %s\n", err)
+		member, err := ac.Services.Users.Login(user)
+		if err == users.ErrInvalidLogin {
+			errors.Default(ac.Logger, w, errors.New(http.StatusUnauthorized, "", err.Error()))
+			return
+		} else if err != nil {
+			ac.Logger.Printf("users.Login() service error: %s\n", err)
 			errors.Default(ac.Logger, w, errors.ErrInternalServerError)
 			return
 		}
 
-		// Issue a new JWT for this user.
-		token, err := auth.NewJWT(ac, user.Password, user.ID)
+		// Issue a new JWT for this member.
+		token, err := auth.NewJWT(ac, member.Password, member.ID)
 		if err != nil {
 			ac.Logger.Printf("auth.NewJWT() error: %s\n", err)
 			errors.Default(ac.Logger, w, errors.ErrInternalServerError)
@@ -57,9 +61,9 @@ func HandlePost(ac *apictx.Context) http.HandlerFunc {
 			Data: token,
 		}
 
-		// Respond with JSON.
+		// Render output.
 		if err := response.JSON(w, true, result); err != nil {
-			ac.Logger.Printf("render.JSON() error: %s\n", err)
+			ac.Logger.Printf("response.JSON() error: %s\n", err)
 			errors.Default(ac.Logger, w, errors.ErrInternalServerError)
 			return
 		}
