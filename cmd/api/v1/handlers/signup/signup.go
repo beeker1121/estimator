@@ -8,6 +8,7 @@ import (
 	"estimator/cmd/api/errors"
 	"estimator/cmd/api/middleware/auth"
 	"estimator/cmd/api/response"
+	serverrors "estimator/services/errors"
 	"estimator/types"
 
 	"github.com/beeker1121/httprouter"
@@ -35,10 +36,11 @@ func HandlePost(ac *apictx.Context) http.HandlerFunc {
 		}
 
 		// Create the user.
-		//
-		// TODO: Implement ParamErrors.
 		user, err := ac.Services.Users.Create(user)
-		if err != nil {
+		if pes, ok := err.(*serverrors.ParamErrors); ok && err != nil {
+			errors.Params(ac.Logger, w, http.StatusBadRequest, pes)
+			return
+		} else if err != nil {
 			ac.Logger.Printf("users.Create() service error: %s\n", err)
 			errors.Default(ac.Logger, w, errors.ErrInternalServerError)
 			return

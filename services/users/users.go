@@ -1,6 +1,7 @@
 package users
 
 import (
+	"estimator/services/errors"
 	"estimator/storage"
 	"estimator/storage/users"
 	"estimator/types"
@@ -23,15 +24,16 @@ func New(s *storage.Storage) *Service {
 
 // Create creates a new user.
 func (s *Service) Create(u *types.User) (*types.User, error) {
-	var err error
+	// Create a new ParamErrors.
+	pes := errors.NewParamErrors()
 
 	// Check email.
 	if u.Email == "" {
-		return nil, ErrEmailEmpty
+		pes.Add(errors.NewParamError("email", ErrEmailEmpty))
 	} else {
 		_, err := s.s.Users.GetByEmail(u.Email)
 		if err == nil {
-			return nil, ErrEmailExists
+			pes.Add(errors.NewParamError("email", ErrEmailExists))
 		} else if err != nil && err != users.ErrUserNotFound {
 			return nil, err
 		}
@@ -39,7 +41,12 @@ func (s *Service) Create(u *types.User) (*types.User, error) {
 
 	// Check password.
 	if len(u.Password) < 8 {
-		return nil, ErrPassword
+		pes.Add(errors.NewParamError("password", ErrPassword))
+	}
+
+	// Return if there were parameter errors.
+	if pes.Length() > 0 {
+		return nil, pes
 	}
 
 	// Hash the password.

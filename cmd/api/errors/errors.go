@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+
+	serverrors "estimator/services/errors"
 )
 
 var (
@@ -115,16 +117,14 @@ func Multiple(logger *log.Logger, w http.ResponseWriter, status int, es *Errors)
 //
 // This is a helper function used by the API endpoint handlers to make it
 // easier to render parameter errors returned from services.
-//
-// TODO: Uncomment this and implement it.
-// func Params(logger *log.Logger, w http.ResponseWriter, status int, pes *serverrors.ParamErrors) {
-// 	// Create new Errors.
-// 	errs := &Errors{}
+func Params(logger *log.Logger, w http.ResponseWriter, status int, pes *serverrors.ParamErrors) {
+	// Create new Errors.
+	errs := &Errors{}
 
-// 	// Loop through each parameter error.
-// 	for _, pe := range *pes {
-// 		errs.Add(New(http.StatusBadRequest, pe.Name, pe.Error()))
-// 	}
+	// Loop through each parameter error.
+	for _, pe := range *pes {
+		errs.Add(New(http.StatusBadRequest, pe.Name, pe.Error()))
+	}
 
-// 	Multiple(logger, w, http.StatusBadRequest, errs)
-// }
+	Multiple(logger, w, http.StatusBadRequest, errs)
+}
