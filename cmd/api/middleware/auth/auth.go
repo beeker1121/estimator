@@ -188,10 +188,10 @@ func GetJWTSigningKey(jwtSecret, password string) []byte {
 
 // GetUserFromRequest retrieves the authenticated user from the request
 // context.
-func GetMemberFromRequest(r *http.Request) (*types.User, error) {
-	member, ok := r.Context().Value(AuthKey).(*types.User)
+func GetUserFromRequest(r *http.Request) (*types.User, error) {
+	user, ok := r.Context().Value(AuthKey).(*types.User)
 	if !ok {
-		return nil, fmt.Errorf("Could not type assert AuthenticatedMember from request context")
+		return nil, fmt.Errorf("could not type assert user from request context")
 	}
-	return member, nil
+	return user, nil
 }

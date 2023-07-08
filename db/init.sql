@@ -6,6 +6,7 @@ CREATE TABLE `accounts` (
 
 CREATE TABLE `users` (
     `id` varchar(36) NOT NULL,
+    `account_id` varchar(36) NOT NULL,
     `email` varchar(255) NOT NULL,
     `password` char(60) NOT NULL,
     PRIMARY KEY (`id`)

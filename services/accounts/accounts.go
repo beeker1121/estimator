@@ -4,6 +4,7 @@ import (
 	"estimator/services/errors"
 	"estimator/storage"
 	"estimator/storage/accounts"
+	"estimator/storage/users"
 	"estimator/types"
 
 	"github.com/google/uuid"
@@ -27,8 +28,15 @@ func (s *Service) Create(a *types.Account) (*types.Account, error) {
 	pes := errors.NewParamErrors()
 
 	// Check name.
+	//
+	// TODO: Move this to a Validate() function.
 	if a.Name == "" {
 		pes.Add(errors.NewParamError("name", ErrNameEmpty))
+	}
+
+	// Return if there were parameter errors.
+	if pes.Length() > 0 {
+		return nil, pes
 	}
 
 	// Set ID.
@@ -86,13 +94,35 @@ func (s *Service) UpdateByID(id string, a *types.Account) (*types.Account, error
 	return a, nil
 }
 
-// UpdateByIDAndUserID updates a account by the given ID and user ID.
+// UpdateByIDAndUserID updates an account by the given ID and user ID.
 func (s *Service) UpdateByIDAndUserID(id, userID string, a *types.Account) (*types.Account, error) {
-	var err error
+	// Create a new ParamErrors.
+	pes := errors.NewParamErrors()
+
+	// Check name.
+	//
+	// TODO: Move this to a Validate() function.
+	if a.Name == "" {
+		pes.Add(errors.NewParamError("name", ErrNameEmpty))
+	}
+
+	// Return if there were parameter errors.
+	if pes.Length() > 0 {
+		return nil, pes
+	}
+
+	// Get this user from storage to verify.
+	_, err := s.s.Users.GetByIDAndAccountID(userID, id)
+	if err == users.ErrUserNotFound {
+		return nil, ErrAccountNotFound
+	} else if err != nil {
+		return nil, err
+	}
+
+	// TODO: Verify role.
 
 	// Map to storage type.
 	sa := &accounts.Account{
-		ID:   id,
 		Name: a.Name,
 	}
 

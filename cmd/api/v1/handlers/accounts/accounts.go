@@ -6,6 +6,7 @@ import (
 
 	apictx "estimator/cmd/api/context"
 	"estimator/cmd/api/errors"
+	"estimator/cmd/api/middleware/auth"
 	"estimator/cmd/api/response"
 	"estimator/services/accounts"
 	serverrors "estimator/services/errors"
@@ -132,12 +133,17 @@ func HandleUpdate(ac *apictx.Context) http.HandlerFunc {
 			return
 		}
 
-		// TODO: Get this user from the request context.
+		// Get this user from the request context.
+		user, err := auth.GetUserFromRequest(r)
+		if err != nil {
+			errors.Default(ac.Logger, w, errors.ErrInternalServerError)
+			return
+		}
 
 		// Update the account.
 		//
 		// TODO: Change this to UpdateByIDAndUserID service call.
-		sa, err := ac.Services.Accounts.UpdateByID(id, &types.Account{
+		sa, err := ac.Services.Accounts.UpdateByIDAndUserID(id, user.ID, &types.Account{
 			Name: a.Name,
 		})
 		if pes, ok := err.(*serverrors.ParamErrors); ok && err != nil {
