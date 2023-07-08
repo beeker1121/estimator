@@ -1,21 +1,24 @@
 package services
 
 import (
-	"estimator/services/form"
+	"estimator/services/accounts"
+	"estimator/services/forms"
 	"estimator/services/users"
 	"estimator/storage"
 )
 
 // Services defines the main business logic services.
 type Services struct {
-	Users *users.Service
-	Form  *form.Service
+	Accounts *accounts.Service
+	Users    *users.Service
+	Forms    *forms.Service
 }
 
 // New creates a new services.
 func New(s *storage.Storage) *Services {
 	return &Services{
-		Users: users.New(s),
-		Form:  form.New(s),
+		Accounts: accounts.New(s),
+		Users:    users.New(s),
+		Forms:    forms.New(s),
 	}
 }

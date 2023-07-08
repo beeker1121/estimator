@@ -4,7 +4,8 @@ import (
 	"database/sql"
 
 	"estimator/storage"
-	"estimator/storage/mysql/form"
+	"estimator/storage/mysql/accounts"
+	"estimator/storage/mysql/forms"
 	"estimator/storage/mysql/users"
 )
 
@@ -12,8 +13,9 @@ import (
 // database.
 func New(db *sql.DB) *storage.Storage {
 	store := &storage.Storage{
-		Users: users.New(db),
-		Form:  form.New(db),
+		Accounts: accounts.New(db),
+		Users:    users.New(db),
+		Forms:    forms.New(db),
 	}
 
 	return store

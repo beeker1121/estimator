@@ -1,4 +1,4 @@
-package form
+package forms
 
 // Database defines the form database interface.
 type Database interface {

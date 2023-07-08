@@ -1,11 +1,11 @@
-package form
+package forms
 
 import (
 	"database/sql"
 	"database/sql/driver"
 	"encoding/json"
 
-	"estimator/storage/form"
+	"estimator/storage/forms"
 )
 
 // Database defines the database.
@@ -72,7 +72,7 @@ func (m *Modules) Scan(src any) error {
 }
 
 // Create creates a new form.
-func (db *Database) Create(f *form.Form) (*form.Form, error) {
+func (db *Database) Create(f *forms.Form) (*forms.Form, error) {
 	// Map to local Form type.
 	lf := &Form{
 		ID: f.ID,
@@ -90,7 +90,7 @@ func (db *Database) Create(f *form.Form) (*form.Form, error) {
 }
 
 // GetByID gets a form by the given ID.
-func (db *Database) GetByID(id string) (*form.Form, error) {
+func (db *Database) GetByID(id string) (*forms.Form, error) {
 	// Create a new Form.
 	f := &Form{
 		Modules: Modules{},
@@ -103,13 +103,13 @@ func (db *Database) GetByID(id string) (*form.Form, error) {
 	err := row.Scan(&f.ID, &f.Modules)
 	switch {
 	case err == sql.ErrNoRows:
-		return nil, form.ErrFormNotFound
+		return nil, forms.ErrFormNotFound
 	case err != nil:
 		return nil, err
 	}
 
 	// Map to storage form type.
-	gf := &form.Form{
+	gf := &forms.Form{
 		ID:      f.ID,
 		Modules: f.Modules.Data,
 	}
@@ -118,7 +118,7 @@ func (db *Database) GetByID(id string) (*form.Form, error) {
 }
 
 // UpdateByID a form by the given ID.
-func (db *Database) UpdateByID(id string, f *form.Form) (*form.Form, error) {
+func (db *Database) UpdateByID(id string, f *forms.Form) (*forms.Form, error) {
 	// Map to local Form type.
 	lf := &Form{
 		ID: id,

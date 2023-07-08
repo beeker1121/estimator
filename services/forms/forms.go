@@ -1,10 +1,10 @@
-package form
+package forms
 
 import (
 	"errors"
 
 	"estimator/storage"
-	"estimator/storage/form"
+	"estimator/storage/forms"
 	"estimator/types"
 
 	"github.com/google/uuid"
@@ -41,13 +41,13 @@ func (s *Service) Create(f *types.Form) (*types.Form, error) {
 	}
 
 	// Map to storage type.
-	sf := &form.Form{
+	sf := &forms.Form{
 		ID:      f.ID,
 		Modules: f.Modules,
 	}
 
 	// Create in storage.
-	sf, err = s.s.Form.Create(sf)
+	sf, err = s.s.Forms.Create(sf)
 	if err != nil {
 		return nil, err
 	}
@@ -58,7 +58,7 @@ func (s *Service) Create(f *types.Form) (*types.Form, error) {
 // GetByID gets a form by the given ID.
 func (s *Service) GetByID(id string) (*types.Form, error) {
 	// Try to pull this form from the database.
-	dbf, err := s.s.Form.GetByID(id)
+	dbf, err := s.s.Forms.GetByID(id)
 	if err != nil {
 		return nil, err
 	}
@@ -91,13 +91,13 @@ func (s *Service) UpdateByIDAndMemberID(id, memberID string, f *types.Form) (*ty
 	}
 
 	// Map to storage type.
-	sf := &form.Form{
+	sf := &forms.Form{
 		ID:      id,
 		Modules: f.Modules,
 	}
 
-	// Create in storage.
-	sf, err = s.s.Form.UpdateByID(id, sf)
+	// Update in storage.
+	sf, err = s.s.Forms.UpdateByID(id, sf)
 	if err != nil {
 		return nil, err
 	}
