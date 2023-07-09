@@ -58,20 +58,22 @@ func (s *Service) Create(f *types.Form) (*types.Form, error) {
 // GetByID gets a form by the given ID.
 func (s *Service) GetByID(id string) (*types.Form, error) {
 	// Try to pull this form from the database.
-	dbf, err := s.s.Forms.GetByID(id)
-	if err != nil {
+	sf, err := s.s.Forms.GetByID(id)
+	if err == forms.ErrFormNotFound {
+		return nil, ErrFormNotFound
+	} else if err != nil {
 		return nil, err
 	}
 
 	// Convert interface to modules.
-	m, err := s.InterfaceToModules(dbf.Modules.([]interface{}))
+	m, err := s.InterfaceToModules(sf.Modules.([]interface{}))
 	if err != nil {
 		return nil, err
 	}
 
 	// Create a new Form.
 	f := &types.Form{
-		ID:      dbf.ID,
+		ID:      sf.ID,
 		Modules: m,
 	}
 
@@ -107,6 +109,8 @@ func (s *Service) UpdateByIDAndMemberID(id, memberID string, f *types.Form) (*ty
 
 // InterfaceToModules takes in an []interface{} and converts it to individual
 // module types.
+//
+// TODO: This should return a services.ParamErrors type on validation errors.
 func (s *Service) InterfaceToModules(i []interface{}) ([]types.Module, error) {
 	// Create modules slice.
 	modules := []types.Module{}

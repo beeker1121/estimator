@@ -58,7 +58,7 @@ func (s *Service) Create(a *types.Account) (*types.Account, error) {
 	return a, nil
 }
 
-// GetByID gets a account by the given ID.
+// GetByID gets an account by the given ID.
 func (s *Service) GetByID(id string) (*types.Account, error) {
 	// Try to pull this account from the database.
 	dba, err := s.s.Accounts.GetByID(id)
@@ -75,7 +75,7 @@ func (s *Service) GetByID(id string) (*types.Account, error) {
 	return u, nil
 }
 
-// UpdateByID updates a account by the given ID.
+// UpdateByID updates an account by the given ID.
 func (s *Service) UpdateByID(id string, a *types.Account) (*types.Account, error) {
 	var err error
 

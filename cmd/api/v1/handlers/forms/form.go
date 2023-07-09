@@ -2,13 +2,13 @@ package forms
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 
 	apictx "estimator/cmd/api/context"
 	"estimator/cmd/api/errors"
 	"estimator/cmd/api/response"
 	serverrors "estimator/services/errors"
+	"estimator/services/forms"
 	"estimator/types"
 
 	"github.com/beeker1121/httprouter"
@@ -49,12 +49,8 @@ func HandleCreate(ac *apictx.Context) http.HandlerFunc {
 			errors.Params(ac.Logger, w, http.StatusBadRequest, pes)
 			return
 		} else if err != nil {
-			ac.Logger.Printf("form.Create() service error: %s\n", err)
+			ac.Logger.Printf("form.InterfaceToModules() service error: %s\n", err)
 			errors.Default(ac.Logger, w, errors.ErrInternalServerError)
-			return
-		}
-		if err != nil {
-			errors.Default(ac.Logger, w, errors.ErrBadRequest)
 			return
 		}
 
@@ -92,7 +88,7 @@ func HandleCreate(ac *apictx.Context) http.HandlerFunc {
 
 		// Respond with JSON.
 		if err := response.JSON(w, true, result); err != nil {
-			ac.Logger.Printf("render.JSON() error: %s\n", err)
+			ac.Logger.Printf("response.JSON() error: %s\n", err)
 			errors.Default(ac.Logger, w, errors.ErrInternalServerError)
 			return
 		}
@@ -107,12 +103,12 @@ func HandleGet(ac *apictx.Context) http.HandlerFunc {
 
 		// Get the form.
 		sf, err := ac.Services.Forms.GetByID(id)
-		// TODO: Implement else if for ErrFormNotFound.
-		if err != nil {
-			// TODO: Create response package to handle sending back JSON and
-			//       errors.
-			w.Write([]byte("error getting form"))
+		if err == forms.ErrFormNotFound {
+			errors.Default(ac.Logger, w, errors.New(http.StatusNotFound, "", err.Error()))
 			return
+		} else if err != nil {
+			ac.Logger.Printf("forms.GetByID() service error: %s\n", err)
+			errors.Default(ac.Logger, w, errors.ErrInternalServerError)
 		}
 
 		// Map to API form response.
@@ -126,8 +122,9 @@ func HandleGet(ac *apictx.Context) http.HandlerFunc {
 
 		// Respond with JSON.
 		if err := response.JSON(w, true, f); err != nil {
-			// TODO: Use logger.
-			fmt.Printf("error in handler: %v\n", err)
+			ac.Logger.Printf("response.JSON() error: %s\n", err)
+			errors.Default(ac.Logger, w, errors.ErrInternalServerError)
+			return
 		}
 	}
 }
@@ -138,19 +135,23 @@ func HandleUpdate(ac *apictx.Context) http.HandlerFunc {
 		// Parse the request body.
 		var f Form
 		if err := json.NewDecoder(r.Body).Decode(&f); err != nil {
-			w.Write([]byte("error decoding request body"))
+			errors.Default(ac.Logger, w, errors.ErrBadRequest)
 			return
 		}
 
 		// Get the form ID.
 		id := httprouter.GetParam(r, "id")
 
-		// TODO: Get this member from the request context.
+		// TODO: Get this user from the request context.
 
 		// Map modules interface to module types.
 		modules, err := ac.Services.Forms.InterfaceToModules(f.Modules)
-		if err != nil {
-			w.Write([]byte("error converting interface to modules"))
+		if pes, ok := err.(*serverrors.ParamErrors); ok && err != nil {
+			errors.Params(ac.Logger, w, http.StatusBadRequest, pes)
+			return
+		} else if err != nil {
+			ac.Logger.Printf("form.InterfaceToModules() service error: %s\n", err)
+			errors.Default(ac.Logger, w, errors.ErrInternalServerError)
 			return
 		}
 
@@ -158,12 +159,15 @@ func HandleUpdate(ac *apictx.Context) http.HandlerFunc {
 		sf, err := ac.Services.Forms.UpdateByIDAndMemberID(id, "", &types.Form{
 			Modules: modules,
 		})
-		// TODO: Implement param error type check first.
-		// TODO: Implement else if for ErrFormNotFound.
-		if err != nil {
-			// TODO: Create response package to handle sending back JSON and
-			//       errors.
-			w.Write([]byte("error getting form"))
+		if pes, ok := err.(*serverrors.ParamErrors); ok && err != nil {
+			errors.Params(ac.Logger, w, http.StatusBadRequest, pes)
+			return
+		} else if err == forms.ErrFormNotFound {
+			errors.Default(ac.Logger, w, errors.New(http.StatusNotFound, "", err.Error()))
+			return
+		} else if err != nil {
+			ac.Logger.Printf("forms.UpdateByIDAndMemberID() service error: %s\n", err)
+			errors.Default(ac.Logger, w, errors.ErrInternalServerError)
 			return
 		}
 
@@ -175,18 +179,21 @@ func HandleUpdate(ac *apictx.Context) http.HandlerFunc {
 		// Get JSON for modules.
 		modulesJSON, err := json.Marshal(sf.Modules)
 		if err != nil {
-			w.Write([]byte("error marshaling modules to JSON"))
+			ac.Logger.Printf("json.Marshal() error: %s\n", err)
+			errors.Default(ac.Logger, w, errors.ErrInternalServerError)
 			return
 		}
 		if err := json.Unmarshal(modulesJSON, &res.Modules); err != nil {
-			w.Write([]byte("error unmarshaling modules to interface"))
+			ac.Logger.Printf("json.Unmarshal() error: %s\n", err)
+			errors.Default(ac.Logger, w, errors.ErrInternalServerError)
 			return
 		}
 
 		// Respond with JSON.
 		if err := response.JSON(w, true, res); err != nil {
-			// TODO: Use logger.
-			fmt.Printf("error in handler: %v\n", err)
+			ac.Logger.Printf("response.JSON() error: %s\n", err)
+			errors.Default(ac.Logger, w, errors.ErrInternalServerError)
+			return
 		}
 	}
 }

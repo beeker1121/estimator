@@ -35,10 +35,10 @@ func HandlePost(ac *apictx.Context) http.HandlerFunc {
 			return
 		}
 
-		// Try to log this member in.
+		// Try to log this user in.
 		//
 		// TODO: Implement ParamErrors.
-		member, err := ac.Services.Users.Login(user)
+		user, err := ac.Services.Users.Login(user)
 		if err == users.ErrInvalidLogin {
 			errors.Default(ac.Logger, w, errors.New(http.StatusUnauthorized, "", err.Error()))
 			return
@@ -48,8 +48,8 @@ func HandlePost(ac *apictx.Context) http.HandlerFunc {
 			return
 		}
 
-		// Issue a new JWT for this member.
-		token, err := auth.NewJWT(ac, member.Password, member.ID)
+		// Issue a new JWT for this user.
+		token, err := auth.NewJWT(ac, user.Password, user.ID)
 		if err != nil {
 			ac.Logger.Printf("auth.NewJWT() error: %s\n", err)
 			errors.Default(ac.Logger, w, errors.ErrInternalServerError)

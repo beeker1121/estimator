@@ -141,8 +141,6 @@ func HandleUpdate(ac *apictx.Context) http.HandlerFunc {
 		}
 
 		// Update the account.
-		//
-		// TODO: Change this to UpdateByIDAndUserID service call.
 		sa, err := ac.Services.Accounts.UpdateByIDAndUserID(id, user.ID, &types.Account{
 			Name: a.Name,
 		})
