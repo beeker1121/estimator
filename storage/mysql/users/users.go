@@ -2,6 +2,7 @@ package users
 
 import (
 	"database/sql"
+	"fmt"
 
 	"estimator/storage/users"
 )
@@ -52,7 +53,7 @@ WHERE email=?
 	// to update a user by the given ID.
 	stmtUpdateByID = `
 UPDATE users
-SET account_id=?, email=?, password=?
+SET %s
 WHERE id=?
 `
 )
@@ -168,19 +169,63 @@ func (db *Database) GetByEmail(email string) (*users.User, error) {
 }
 
 // UpdateByID a user by the given ID.
-func (db *Database) UpdateByID(id string, u *users.User) (*users.User, error) {
-	// Map to local User type.
-	lu := &User{
-		ID:        id,
-		AccountID: u.AccountID,
-		Email:     u.Email,
-		Password:  u.Password,
+func (db *Database) UpdateByID(id string, up *users.UpdateParams) (*users.User, error) {
+	// Create variables to hold the query fields
+	// being updated and their new values.
+	var queryFields string
+	var queryValues []interface{}
+
+	// Handle account ID field.
+	if up.AccountID != nil {
+		if queryFields == "" {
+			queryFields = "account_id=?"
+		} else {
+			queryFields += ", account_id=?"
+		}
+
+		queryValues = append(queryValues, *up.AccountID)
 	}
 
+	// Handle email field.
+	if up.Email != nil {
+		if queryFields == "" {
+			queryFields = "email=?"
+		} else {
+			queryFields += ", email=?"
+		}
+
+		queryValues = append(queryValues, *up.Email)
+	}
+
+	// Handle password field.
+	if up.Password != nil {
+		if queryFields == "" {
+			queryFields = "password=?"
+		} else {
+			queryFields += ", password=?"
+		}
+
+		queryValues = append(queryValues, *up.Password)
+	}
+
+	// Check if query is empty.
+	if queryFields == "" {
+		return db.GetByID(id)
+	}
+
+	// Build the full query.
+	query := fmt.Sprintf(stmtUpdateByID, queryFields)
+	queryValues = append(queryValues, id)
+
 	// Execute the query.
-	if _, err := db.db.Exec(stmtUpdateByID, lu.AccountID, lu.Email, lu.Password, lu.ID); err != nil {
+	_, err := db.db.Exec(query, queryValues...)
+	if err != nil {
 		return nil, err
 	}
 
-	return u, nil
+	// Since the GetByID method is straight forward,
+	// we can use this method to retrieve the updated
+	// todo. Anything more complicated should use the
+	// original statement constants.
+	return db.GetByID(id)
 }

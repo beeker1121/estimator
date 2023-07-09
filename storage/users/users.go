@@ -6,7 +6,7 @@ type Database interface {
 	GetByID(id string) (*User, error)
 	GetByIDAndAccountID(id, accountID string) (*User, error)
 	GetByEmail(email string) (*User, error)
-	UpdateByID(id string, u *User) (*User, error)
+	UpdateByID(id string, up *UpdateParams) (*User, error)
 }
 
 // User defines a user.
@@ -15,4 +15,12 @@ type User struct {
 	AccountID string
 	Email     string
 	Password  string
+}
+
+// UpdateParams defines the parameters for the Update method.
+type UpdateParams struct {
+	ID        *string
+	AccountID *string
+	Email     *string
+	Password  *string
 }

@@ -55,14 +55,16 @@ func (s *Service) Create(u *types.User) (*types.User, error) {
 		return nil, err
 	}
 
-	// Set ID.
+	// Set ID and password.
 	u.ID = uuid.NewString()
+	u.Password = string(pwHash)
 
 	// Map to storage type.
 	su := &users.User{
-		ID:       u.ID,
-		Email:    u.Email,
-		Password: string(pwHash),
+		ID:        u.ID,
+		AccountID: u.AccountID,
+		Email:     u.Email,
+		Password:  u.Password,
 	}
 
 	// Create in storage.
@@ -91,9 +93,10 @@ func (s *Service) Login(u *types.User) (*types.User, error) {
 
 	// Map to user type.
 	u = &types.User{
-		ID:       su.ID,
-		Email:    su.Email,
-		Password: su.Password,
+		ID:        su.ID,
+		AccountID: su.AccountID,
+		Email:     su.Email,
+		Password:  su.Password,
 	}
 
 	return u, nil
@@ -102,36 +105,67 @@ func (s *Service) Login(u *types.User) (*types.User, error) {
 // GetByID gets a user by the given ID.
 func (s *Service) GetByID(id string) (*types.User, error) {
 	// Try to pull this user from the database.
-	dbu, err := s.s.Users.GetByID(id)
+	su, err := s.s.Users.GetByID(id)
 	if err != nil {
 		return nil, err
 	}
 
 	// Map to user type.
 	u := &types.User{
-		ID:       dbu.ID,
-		Email:    dbu.Email,
-		Password: dbu.Password,
+		ID:        su.ID,
+		AccountID: su.AccountID,
+		Email:     su.Email,
+		Password:  su.Password,
 	}
 
 	return u, nil
 }
 
 // UpdateByID updates a user by the given ID.
-func (s *Service) UpdateByID(id string, u *types.User) (*types.User, error) {
-	var err error
+func (s *Service) UpdateByID(id string, uup *types.UserUpdateParams) (*types.User, error) {
+	// Create a new ParamErrors.
+	pes := errors.NewParamErrors()
 
 	// Map to storage type.
-	su := &users.User{
-		ID:       id,
-		Email:    u.Email,
-		Password: u.Password,
+	sup := &users.UpdateParams{
+		ID:        uup.ID,
+		AccountID: uup.AccountID,
+		Email:     uup.Email,
+	}
+
+	// Handle password.
+	if uup.Password != nil {
+		if len(*uup.Password) < 8 {
+			pes.Add(errors.NewParamError("password", ErrPassword))
+		}
+
+		// Return if there were parameter errors.
+		if pes.Length() > 0 {
+			return nil, pes
+		}
+
+		// Hash the password.
+		pwHash, err := bcrypt.GenerateFromPassword([]byte(*uup.Password), bcrypt.DefaultCost)
+		if err != nil {
+			return nil, err
+		}
+		pwHashStr := string(pwHash)
+
+		sup.Password = &pwHashStr
 	}
 
 	// Create in storage.
-	su, err = s.s.Users.UpdateByID(id, su)
+	su, err := s.s.Users.UpdateByID(id, sup)
 	if err != nil {
 		return nil, err
+	}
+
+	// Map to user type.
+	u := &types.User{
+		ID:        su.ID,
+		AccountID: su.AccountID,
+		Email:     su.Email,
+		Password:  su.Password,
 	}
 
 	return u, nil
