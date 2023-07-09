@@ -63,8 +63,10 @@ func (s *Service) Create(u *types.User) (*types.User, error) {
 	su := &users.User{
 		ID:        u.ID,
 		AccountID: u.AccountID,
+		Name:      u.Name,
 		Email:     u.Email,
 		Password:  u.Password,
+		Role:      u.Role,
 	}
 
 	// Create in storage.
@@ -95,8 +97,10 @@ func (s *Service) Login(u *types.User) (*types.User, error) {
 	u = &types.User{
 		ID:        su.ID,
 		AccountID: su.AccountID,
+		Name:      su.Name,
 		Email:     su.Email,
 		Password:  su.Password,
+		Role:      su.Role,
 	}
 
 	return u, nil
@@ -114,8 +118,10 @@ func (s *Service) GetByID(id string) (*types.User, error) {
 	u := &types.User{
 		ID:        su.ID,
 		AccountID: su.AccountID,
+		Name:      su.Name,
 		Email:     su.Email,
 		Password:  su.Password,
+		Role:      su.Role,
 	}
 
 	return u, nil
@@ -130,10 +136,26 @@ func (s *Service) UpdateByID(id string, uup *types.UserUpdateParams) (*types.Use
 	sup := &users.UpdateParams{
 		ID:        uup.ID,
 		AccountID: uup.AccountID,
+		Name:      uup.Name,
 		Email:     uup.Email,
+		Role:      uup.Role,
 	}
 
-	// Handle password.
+	// Check email.
+	if uup.Email != nil {
+		if *uup.Email == "" {
+			pes.Add(errors.NewParamError("email", ErrEmailEmpty))
+		} else {
+			_, err := s.s.Users.GetByEmail(*uup.Email)
+			if err == nil {
+				pes.Add(errors.NewParamError("email", ErrEmailExists))
+			} else if err != nil && err != users.ErrUserNotFound {
+				return nil, err
+			}
+		}
+	}
+
+	// Check password.
 	if uup.Password != nil {
 		if len(*uup.Password) < 8 {
 			pes.Add(errors.NewParamError("password", ErrPassword))
@@ -164,8 +186,10 @@ func (s *Service) UpdateByID(id string, uup *types.UserUpdateParams) (*types.Use
 	u := &types.User{
 		ID:        su.ID,
 		AccountID: su.AccountID,
+		Name:      su.Name,
 		Email:     su.Email,
 		Password:  su.Password,
+		Role:      su.Role,
 	}
 
 	return u, nil

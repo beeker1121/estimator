@@ -23,8 +23,8 @@ const (
 	// stmtInsert defines the SQL statement to
 	// insert a new user into the database.
 	stmtInsert = `
-INSERT INTO users (id, account_id, email, password)
-VALUES (?, ?, ?)
+INSERT INTO users (id, account_id, name, email, password, role)
+VALUES (?, ?, ?, ?, ?, ?)
 `
 
 	// stmtGetByID defines the SQL statement to
@@ -62,8 +62,10 @@ WHERE id=?
 type User struct {
 	ID        string
 	AccountID string
+	Name      string
 	Email     string
 	Password  string
+	Role      string
 }
 
 // Create creates a new user.
@@ -72,12 +74,14 @@ func (db *Database) Create(u *users.User) (*users.User, error) {
 	lu := &User{
 		ID:        u.ID,
 		AccountID: u.AccountID,
+		Name:      u.Name,
 		Email:     u.Email,
 		Password:  u.Password,
+		Role:      u.Role,
 	}
 
 	// Execute the query.
-	if _, err := db.db.Exec(stmtInsert, lu.ID, lu.AccountID, lu.Email, lu.Password); err != nil {
+	if _, err := db.db.Exec(stmtInsert, lu.ID, lu.AccountID, lu.Name, lu.Email, lu.Password, lu.Role); err != nil {
 		return nil, err
 	}
 
@@ -93,7 +97,7 @@ func (db *Database) GetByID(id string) (*users.User, error) {
 	row := db.db.QueryRow(stmtGetByID, id)
 
 	// Map columns to user.
-	err := row.Scan(&u.ID, &u.AccountID, &u.Email, &u.Password)
+	err := row.Scan(&u.ID, &u.AccountID, &u.Name, &u.Email, &u.Password, &u.Role)
 	switch {
 	case err == sql.ErrNoRows:
 		return nil, users.ErrUserNotFound
@@ -102,14 +106,16 @@ func (db *Database) GetByID(id string) (*users.User, error) {
 	}
 
 	// Map to storage user type.
-	uf := &users.User{
+	su := &users.User{
 		ID:        u.ID,
 		AccountID: u.AccountID,
+		Name:      u.Name,
 		Email:     u.Email,
 		Password:  u.Password,
+		Role:      u.Role,
 	}
 
-	return uf, nil
+	return su, nil
 }
 
 // GetByIDAndAccountID gets a user by the given ID and account ID.
@@ -121,7 +127,7 @@ func (db *Database) GetByIDAndAccountID(id, accountID string) (*users.User, erro
 	row := db.db.QueryRow(stmtGetByIDAndAccountID, id, accountID)
 
 	// Map columns to user.
-	err := row.Scan(&u.ID, &u.AccountID, &u.Email, &u.Password)
+	err := row.Scan(&u.ID, &u.AccountID, &u.Name, &u.Email, &u.Password, &u.Role)
 	switch {
 	case err == sql.ErrNoRows:
 		return nil, users.ErrUserNotFound
@@ -133,8 +139,10 @@ func (db *Database) GetByIDAndAccountID(id, accountID string) (*users.User, erro
 	uf := &users.User{
 		ID:        u.ID,
 		AccountID: u.AccountID,
+		Name:      u.Name,
 		Email:     u.Email,
 		Password:  u.Password,
+		Role:      u.Role,
 	}
 
 	return uf, nil
@@ -149,7 +157,7 @@ func (db *Database) GetByEmail(email string) (*users.User, error) {
 	row := db.db.QueryRow(stmtGetByEmail, email)
 
 	// Map columns to user.
-	err := row.Scan(&u.ID, &u.AccountID, &u.Email, &u.Password)
+	err := row.Scan(&u.ID, &u.AccountID, &u.Name, &u.Email, &u.Password, &u.Role)
 	switch {
 	case err == sql.ErrNoRows:
 		return nil, users.ErrUserNotFound
@@ -161,8 +169,10 @@ func (db *Database) GetByEmail(email string) (*users.User, error) {
 	uf := &users.User{
 		ID:        u.ID,
 		AccountID: u.AccountID,
+		Name:      u.Name,
 		Email:     u.Email,
 		Password:  u.Password,
+		Role:      u.Role,
 	}
 
 	return uf, nil
@@ -186,6 +196,17 @@ func (db *Database) UpdateByID(id string, up *users.UpdateParams) (*users.User, 
 		queryValues = append(queryValues, *up.AccountID)
 	}
 
+	// Handle name field.
+	if up.Name != nil {
+		if queryFields == "" {
+			queryFields = "name=?"
+		} else {
+			queryFields += ", name=?"
+		}
+
+		queryValues = append(queryValues, *up.Name)
+	}
+
 	// Handle email field.
 	if up.Email != nil {
 		if queryFields == "" {
@@ -206,6 +227,17 @@ func (db *Database) UpdateByID(id string, up *users.UpdateParams) (*users.User, 
 		}
 
 		queryValues = append(queryValues, *up.Password)
+	}
+
+	// Handle role field.
+	if up.Role != nil {
+		if queryFields == "" {
+			queryFields = "role=?"
+		} else {
+			queryFields += ", role=?"
+		}
+
+		queryValues = append(queryValues, *up.Role)
 	}
 
 	// Check if query is empty.

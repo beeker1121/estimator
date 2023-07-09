@@ -83,12 +83,12 @@ func (db *Database) GetByID(id string) (*accounts.Account, error) {
 	}
 
 	// Map to storage account type.
-	ga := &accounts.Account{
+	sa := &accounts.Account{
 		ID:   a.ID,
 		Name: a.Name,
 	}
 
-	return ga, nil
+	return sa, nil
 }
 
 // UpdateByID a form by the given ID.

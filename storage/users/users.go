@@ -13,14 +13,18 @@ type Database interface {
 type User struct {
 	ID        string
 	AccountID string
+	Name      string
 	Email     string
 	Password  string
+	Role      string
 }
 
 // UpdateParams defines the update parameters.
 type UpdateParams struct {
 	ID        *string
 	AccountID *string
+	Name      *string
 	Email     *string
 	Password  *string
+	Role      *string
 }

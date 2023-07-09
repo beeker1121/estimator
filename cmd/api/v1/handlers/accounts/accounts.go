@@ -67,15 +67,12 @@ func HandleCreate(ac *apictx.Context) http.HandlerFunc {
 			return
 		}
 
-		// Set account response.
-		ares := Account{
-			ID:   sa.ID,
-			Name: sa.Name,
-		}
-
-		// Create a new Result.
+		// Create a new result.
 		result := ResultCreate{
-			Data: ares,
+			Data: Account{
+				ID:   sa.ID,
+				Name: sa.Name,
+			},
 		}
 
 		// Respond with JSON.

@@ -36,8 +36,6 @@ func HandlePost(ac *apictx.Context) http.HandlerFunc {
 		}
 
 		// Try to log this user in.
-		//
-		// TODO: Implement ParamErrors.
 		user, err := ac.Services.Users.Login(user)
 		if err == users.ErrInvalidLogin {
 			errors.Default(ac.Logger, w, errors.New(http.StatusUnauthorized, "", err.Error()))
