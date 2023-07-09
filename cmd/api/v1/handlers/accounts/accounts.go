@@ -134,7 +134,7 @@ func HandleUpdate(ac *apictx.Context) http.HandlerFunc {
 		id := httprouter.GetParam(r, "id")
 
 		// Parse the request body.
-		var a Account
+		var a types.AccountUpdateParams
 		if err := json.NewDecoder(r.Body).Decode(&a); err != nil {
 			errors.Default(ac.Logger, w, errors.ErrBadRequest)
 			return
@@ -148,7 +148,7 @@ func HandleUpdate(ac *apictx.Context) http.HandlerFunc {
 		}
 
 		// Update the account.
-		sa, err := ac.Services.Accounts.UpdateByIDAndUserID(id, user.ID, &types.Account{
+		sa, err := ac.Services.Accounts.UpdateByIDAndUserID(id, user.ID, &types.AccountUpdateParams{
 			Name: a.Name,
 		})
 		if pes, ok := err.(*serverrors.ParamErrors); ok && err != nil {
@@ -161,7 +161,7 @@ func HandleUpdate(ac *apictx.Context) http.HandlerFunc {
 		}
 
 		// Create a new result.
-		result := ResultCreate{
+		result := ResultUpdate{
 			Data: Account{
 				ID:   sa.ID,
 				Name: sa.Name,
