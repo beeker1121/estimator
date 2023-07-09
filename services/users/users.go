@@ -154,7 +154,7 @@ func (s *Service) UpdateByID(id string, uup *types.UserUpdateParams) (*types.Use
 		sup.Password = &pwHashStr
 	}
 
-	// Create in storage.
+	// Update in storage.
 	su, err := s.s.Users.UpdateByID(id, sup)
 	if err != nil {
 		return nil, err

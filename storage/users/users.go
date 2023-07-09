@@ -17,7 +17,7 @@ type User struct {
 	Password  string
 }
 
-// UpdateParams defines the parameters for the Update method.
+// UpdateParams defines the update parameters.
 type UpdateParams struct {
 	ID        *string
 	AccountID *string

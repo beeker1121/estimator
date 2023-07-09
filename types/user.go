@@ -8,7 +8,7 @@ type User struct {
 	Password  string `json:"password"`
 }
 
-// UserUpdateParams defines the parameters for the Update method.
+// UserUpdateParams defines the update parameters for users.
 type UserUpdateParams struct {
 	ID        *string `json:"id"`
 	AccountID *string `json:"account_id"`

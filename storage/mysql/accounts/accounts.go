@@ -2,6 +2,7 @@ package accounts
 
 import (
 	"database/sql"
+	"fmt"
 
 	"estimator/storage/accounts"
 )
@@ -37,7 +38,7 @@ WHERE id=?
 	// to update an account by the given ID.
 	stmtUpdateByID = `
 UPDATE accounts
-SET name=?
+SET %s
 WHERE id=?
 `
 )
@@ -91,17 +92,41 @@ func (db *Database) GetByID(id string) (*accounts.Account, error) {
 }
 
 // UpdateByID a form by the given ID.
-func (db *Database) UpdateByID(id string, a *accounts.Account) (*accounts.Account, error) {
-	// Map to local Account type.
-	la := &Account{
-		ID:   id,
-		Name: a.Name,
+func (db *Database) UpdateByID(id string, up *accounts.UpdateParams) (*accounts.Account, error) {
+	// Create variables to hold the query fields
+	// being updated and their new values.
+	var queryFields string
+	var queryValues []interface{}
+
+	// Handle name field.
+	if up.Name != nil {
+		if queryFields == "" {
+			queryFields = "name=?"
+		} else {
+			queryFields += ", name=?"
+		}
+
+		queryValues = append(queryValues, *up.Name)
 	}
 
+	// Check if query is empty.
+	if queryFields == "" {
+		return db.GetByID(id)
+	}
+
+	// Build the full query.
+	query := fmt.Sprintf(stmtUpdateByID, queryFields)
+	queryValues = append(queryValues, id)
+
 	// Execute the query.
-	if _, err := db.db.Exec(stmtUpdateByID, la.Name, la.ID); err != nil {
+	_, err := db.db.Exec(query, queryValues...)
+	if err != nil {
 		return nil, err
 	}
 
-	return a, nil
+	// Since the GetByID method is straight forward,
+	// we can use this method to retrieve the updated
+	// todo. Anything more complicated should use the
+	// original statement constants.
+	return db.GetByID(id)
 }
