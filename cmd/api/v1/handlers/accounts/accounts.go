@@ -80,7 +80,7 @@ func HandleCreate(ac *apictx.Context) http.HandlerFunc {
 
 		// Respond with JSON.
 		if err := response.JSON(w, true, result); err != nil {
-			ac.Logger.Printf("render.JSON() error: %s\n", err)
+			ac.Logger.Printf("response.JSON() error: %s\n", err)
 			errors.Default(ac.Logger, w, errors.ErrInternalServerError)
 			return
 		}
@@ -93,8 +93,15 @@ func HandleGet(ac *apictx.Context) http.HandlerFunc {
 		// Get the account ID.
 		id := httprouter.GetParam(r, "id")
 
+		// Get this user from the request context.
+		user, err := auth.GetUserFromRequest(r)
+		if err != nil {
+			errors.Default(ac.Logger, w, errors.ErrInternalServerError)
+			return
+		}
+
 		// Get the account.
-		sa, err := ac.Services.Accounts.GetByID(id)
+		sa, err := ac.Services.Accounts.GetByIDAndUserID(id, user.ID)
 		if err == accounts.ErrAccountNotFound {
 			errors.Default(ac.Logger, w, errors.New(http.StatusNotFound, "", err.Error()))
 			return
@@ -104,7 +111,7 @@ func HandleGet(ac *apictx.Context) http.HandlerFunc {
 		}
 
 		// Create a new result.
-		result := ResultCreate{
+		result := ResultGet{
 			Data: Account{
 				ID:   sa.ID,
 				Name: sa.Name,

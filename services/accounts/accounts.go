@@ -61,18 +61,45 @@ func (s *Service) Create(a *types.Account) (*types.Account, error) {
 // GetByID gets an account by the given ID.
 func (s *Service) GetByID(id string) (*types.Account, error) {
 	// Try to pull this account from the database.
-	dba, err := s.s.Accounts.GetByID(id)
+	sa, err := s.s.Accounts.GetByID(id)
 	if err != nil {
 		return nil, err
 	}
 
 	// Map to account type.
-	u := &types.Account{
-		ID:   dba.ID,
-		Name: dba.Name,
+	a := &types.Account{
+		ID:   sa.ID,
+		Name: sa.Name,
 	}
 
-	return u, nil
+	return a, nil
+}
+
+// GetByIDAndUserID gets an account by the given ID and user ID.
+func (s *Service) GetByIDAndUserID(id, userID string) (*types.Account, error) {
+	// Get this user from storage to verify.
+	_, err := s.s.Users.GetByIDAndAccountID(userID, id)
+	if err == users.ErrUserNotFound {
+		return nil, ErrAccountNotFound
+	} else if err != nil {
+		return nil, err
+	}
+
+	// TODO: Verify role.
+
+	// Try to pull this account from the database.
+	sa, err := s.s.Accounts.GetByID(id)
+	if err != nil {
+		return nil, err
+	}
+
+	// Map to account type.
+	a := &types.Account{
+		ID:   sa.ID,
+		Name: sa.Name,
+	}
+
+	return a, nil
 }
 
 // UpdateByID updates an account by the given ID.

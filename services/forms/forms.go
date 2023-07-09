@@ -80,8 +80,8 @@ func (s *Service) GetByID(id string) (*types.Form, error) {
 	return f, nil
 }
 
-// UpdateByIDAndMemberID updates a form by the given ID and member ID.
-func (s *Service) UpdateByIDAndMemberID(id, memberID string, f *types.Form) (*types.Form, error) {
+// UpdateByIDAndUserID updates a form by the given ID and member ID.
+func (s *Service) UpdateByIDAndUserID(id, userID string, f *types.Form) (*types.Form, error) {
 	var err error
 
 	// Loop through the modules.

@@ -25,6 +25,16 @@ type ResultCreate struct {
 	Data Form `json:"data"`
 }
 
+// ResultGet defines the response data for the HandleGet handler.
+type ResultGet struct {
+	Data Form `json:"data"`
+}
+
+// ResultUpdate defines the response data for the HandleUpdate handler.
+type ResultUpdate struct {
+	Data Form `json:"data"`
+}
+
 // New creates a new forms handler.
 func New(ac *apictx.Context, router *httprouter.Router) {
 	// Handle the routes.
@@ -58,8 +68,12 @@ func HandleCreate(ac *apictx.Context) http.HandlerFunc {
 		sf, err := ac.Services.Forms.Create(&types.Form{
 			Modules: modules,
 		})
-		if err != nil {
-			w.Write([]byte("error creating form"))
+		if pes, ok := err.(*serverrors.ParamErrors); ok && err != nil {
+			errors.Params(ac.Logger, w, http.StatusBadRequest, pes)
+			return
+		} else if err != nil {
+			ac.Logger.Printf("forms.Create() service error: %s\n", err)
+			errors.Default(ac.Logger, w, errors.ErrInternalServerError)
 			return
 		}
 
@@ -111,7 +125,7 @@ func HandleGet(ac *apictx.Context) http.HandlerFunc {
 			errors.Default(ac.Logger, w, errors.ErrInternalServerError)
 		}
 
-		// Map to API form response.
+		// Map to API form.
 		f := &Form{
 			ID:      sf.ID,
 			Modules: []interface{}{},
@@ -120,8 +134,13 @@ func HandleGet(ac *apictx.Context) http.HandlerFunc {
 			f.Modules = append(f.Modules, v)
 		}
 
+		// Create a new result.
+		result := ResultGet{
+			Data: *f,
+		}
+
 		// Respond with JSON.
-		if err := response.JSON(w, true, f); err != nil {
+		if err := response.JSON(w, true, result); err != nil {
 			ac.Logger.Printf("response.JSON() error: %s\n", err)
 			errors.Default(ac.Logger, w, errors.ErrInternalServerError)
 			return
@@ -143,6 +162,7 @@ func HandleUpdate(ac *apictx.Context) http.HandlerFunc {
 		id := httprouter.GetParam(r, "id")
 
 		// TODO: Get this user from the request context.
+		// TODO: Get the account and role.
 
 		// Map modules interface to module types.
 		modules, err := ac.Services.Forms.InterfaceToModules(f.Modules)
@@ -156,7 +176,7 @@ func HandleUpdate(ac *apictx.Context) http.HandlerFunc {
 		}
 
 		// Update the form.
-		sf, err := ac.Services.Forms.UpdateByIDAndMemberID(id, "", &types.Form{
+		sf, err := ac.Services.Forms.UpdateByIDAndUserID(id, "", &types.Form{
 			Modules: modules,
 		})
 		if pes, ok := err.(*serverrors.ParamErrors); ok && err != nil {
@@ -166,7 +186,7 @@ func HandleUpdate(ac *apictx.Context) http.HandlerFunc {
 			errors.Default(ac.Logger, w, errors.New(http.StatusNotFound, "", err.Error()))
 			return
 		} else if err != nil {
-			ac.Logger.Printf("forms.UpdateByIDAndMemberID() service error: %s\n", err)
+			ac.Logger.Printf("forms.UpdateByIDAndUserID() service error: %s\n", err)
 			errors.Default(ac.Logger, w, errors.ErrInternalServerError)
 			return
 		}
