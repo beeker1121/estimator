@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"database/sql/driver"
 	"encoding/json"
+	"fmt"
 
 	"estimator/storage/forms"
 )
@@ -39,7 +40,7 @@ WHERE id=?
 	// to update a form by the given ID.
 	stmtUpdateByID = `
 UPDATE forms
-SET modules=?
+SET %s
 WHERE id=?
 `
 )
@@ -147,14 +148,16 @@ func (db *Database) Create(f *forms.Form) (*forms.Form, error) {
 func (db *Database) GetByID(id string) (*forms.Form, error) {
 	// Create a new Form.
 	f := &Form{
-		Modules: Modules{},
+		Properties: Properties{},
+		Button:     Button{},
+		Modules:    Modules{},
 	}
 
 	// Execute the query.
 	row := db.db.QueryRow(stmtGetByID, id)
 
 	// Map columns to form.
-	err := row.Scan(&f.ID, &f.Modules)
+	err := row.Scan(&f.ID, &f.ProjectID, &f.Name, &f.Properties, &f.Button, &f.Modules)
 	switch {
 	case err == sql.ErrNoRows:
 		return nil, forms.ErrFormNotFound
@@ -176,27 +179,100 @@ func (db *Database) GetByID(id string) (*forms.Form, error) {
 }
 
 // UpdateByID a form by the given ID.
-func (db *Database) UpdateByID(id string, f *forms.Form) (*forms.Form, error) {
-	// Map to local Form type.
-	lf := &Form{
-		ID:        id,
-		ProjectID: f.ProjectID,
-		Name:      f.Name,
-		Properties: Properties{
-			Data: f.Properties,
-		},
-		Button: Button{
-			Data: f.Button,
-		},
-		Modules: Modules{
-			Data: f.Modules,
-		},
+func (db *Database) UpdateByID(id string, up *forms.UpdateParams) (*forms.Form, error) {
+	// Create variables to hold the query fields
+	// being updated and their new values.
+	var queryFields string
+	var queryValues []interface{}
+
+	// Handle project ID field.
+	if up.ProjectID != nil {
+		if queryFields == "" {
+			queryFields = "project_id=?"
+		} else {
+			queryFields += ", project_id=?"
+		}
+
+		queryValues = append(queryValues, *up.ProjectID)
 	}
 
+	// Handle name field.
+	if up.Name != nil {
+		if queryFields == "" {
+			queryFields = "name=?"
+		} else {
+			queryFields += ", name=?"
+		}
+
+		queryValues = append(queryValues, *up.Name)
+	}
+
+	// Handle properties field.
+	if up.Properties != nil {
+		if queryFields == "" {
+			queryFields = "properties=?"
+		} else {
+			queryFields += ", properties=?"
+		}
+
+		// Create new properties.
+		p := Properties{
+			Data: *up.Properties,
+		}
+
+		queryValues = append(queryValues, p)
+	}
+
+	// Handle button field.
+	if up.Button != nil {
+		if queryFields == "" {
+			queryFields = "button=?"
+		} else {
+			queryFields += ", button=?"
+		}
+
+		// Create a new button.
+		b := Button{
+			Data: *up.Button,
+		}
+
+		queryValues = append(queryValues, b)
+	}
+
+	// Handle modules field.
+	if up.Modules != nil {
+		if queryFields == "" {
+			queryFields = "modules=?"
+		} else {
+			queryFields += ", modules=?"
+		}
+
+		// Create new modules.
+		m := Modules{
+			Data: *up.Modules,
+		}
+
+		queryValues = append(queryValues, m)
+	}
+
+	// Check if query is empty.
+	if queryFields == "" {
+		return db.GetByID(id)
+	}
+
+	// Build the full query.
+	query := fmt.Sprintf(stmtUpdateByID, queryFields)
+	queryValues = append(queryValues, id)
+
 	// Execute the query.
-	if _, err := db.db.Exec(stmtUpdateByID, lf.Modules, lf.ID); err != nil {
+	_, err := db.db.Exec(query, queryValues...)
+	if err != nil {
 		return nil, err
 	}
 
-	return f, nil
+	// Since the GetByID method is straight forward,
+	// we can use this method to retrieve the updated
+	// form. Anything more complicated should use the
+	// original statement constants.
+	return db.GetByID(id)
 }

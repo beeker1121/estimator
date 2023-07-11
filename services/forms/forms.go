@@ -2,7 +2,9 @@ package forms
 
 import (
 	"errors"
+	"fmt"
 
+	serverrors "estimator/services/errors"
 	"estimator/storage"
 	"estimator/storage/forms"
 	"estimator/types"
@@ -112,44 +114,150 @@ func (s *Service) GetByID(id string) (*types.Form, error) {
 	return f, nil
 }
 
-// UpdateByIDAndUserID updates a form by the given ID and member ID.
-func (s *Service) UpdateByIDAndUserID(id, userID string, f *types.Form) (*types.Form, error) {
-	var err error
-
-	// Loop through the modules.
-	for _, module := range f.Modules {
-		// Validate the module.
-		if err := module.Validate(); err != nil {
-			return nil, err
-		}
-	}
+// UpdateByIDAndUserID updates a form by the given ID and user ID.
+func (s *Service) UpdateByIDAndUserID(id, userID string, aup *types.FormUpdateParams) (*types.Form, error) {
+	// Create a new ParamErrors.
+	pes := serverrors.NewParamErrors()
 
 	// TODO: Validate project ID.
 
 	// TODO: Validate name.
 
+	// Check name.
+	//
+	// TODO: Move this to a Validate() function.
+	if aup.Name != nil {
+		if *aup.Name == "" {
+			pes.Add(serverrors.NewParamError("name", ErrNameEmpty))
+		}
+	}
+
 	// TODO: Validate properties.
 
 	// TODO: Validate button.
 
+	// Loop through the modules.
+	if aup.Modules != nil {
+		for _, module := range *aup.Modules {
+			// Validate the module.
+			if err := module.Validate(); err != nil {
+				// TODO: Remove the fmt.Errorf() call, have the Validate() method
+				//       use the pes variable for param errors.
+				pes.Add(serverrors.NewParamError("modules", fmt.Errorf("module.Validate() error: %s", err)))
+			}
+		}
+	}
+
+	// Return if there were parameter errors.
+	if pes.Length() > 0 {
+		return nil, pes
+	}
+
+	// TODO: Verify user has permission to update this form.
+	//
+	// // Get this user from storage to verify.
+	// _, err := s.s.Users.GetByIDAndAccountID(userID, id)
+	// if err == users.ErrUserNotFound {
+	// 	return nil, ErrAccountNotFound
+	// } else if err != nil {
+	// 	return nil, err
+	// }
+
+	// // TODO: Verify role.
+
+	// Create interfaces for fields for storage.
+	ip := interface{}(aup.Properties)
+	ib := interface{}(aup.Button)
+	im := interface{}(aup.Modules)
+
 	// Map to storage type.
-	sf := &forms.Form{
-		ID:         id,
-		ProjectID:  f.ProjectID,
-		Name:       f.Name,
-		Properties: f.Properties,
-		Button:     f.Button,
-		Modules:    f.Modules,
+	sup := &forms.UpdateParams{
+		ProjectID:  aup.ProjectID,
+		Name:       aup.Name,
+		Properties: &ip,
+		Button:     &ib,
+		Modules:    &im,
 	}
 
 	// Update in storage.
-	sf, err = s.s.Forms.UpdateByID(id, sf)
+	sf, err := s.s.Forms.UpdateByID(id, sup)
 	if err != nil {
 		return nil, err
 	}
 
+	// Convert properties.
+	propertiesMap := sf.Properties.(map[string]interface{})
+	properties := types.FormProperties{
+		BackgroundColor: propertiesMap["background_color"].(string),
+		FontColor:       propertiesMap["font_color"].(string),
+	}
+
+	// Convert button.
+	buttonMap := sf.Button.(map[string]interface{})
+	button := types.FormButton{
+		BackgroundColor: buttonMap["background_color"].(string),
+		Color:           buttonMap["color"].(string),
+		FontSize:        buttonMap["font_size"].(string),
+		FontFamily:      buttonMap["font_family"].(string),
+	}
+
+	// Convert interface to modules.
+	m, err := s.InterfaceToModules(sf.Modules.([]interface{}))
+	if err != nil {
+		return nil, err
+	}
+
+	// Create a new Form.
+	f := &types.Form{
+		ID:         sf.ID,
+		ProjectID:  sf.ProjectID,
+		Name:       sf.Name,
+		Properties: properties,
+		Button:     button,
+		Modules:    m,
+	}
+
 	return f, nil
 }
+
+// // UpdateByIDAndUserID updates a form by the given ID and user ID.
+// func (s *Service) UpdateByIDAndUserID(id, userID string, f *types.Form) (*types.Form, error) {
+// 	var err error
+
+// 	// Loop through the modules.
+// 	for _, module := range f.Modules {
+// 		// Validate the module.
+// 		if err := module.Validate(); err != nil {
+// 			return nil, err
+// 		}
+// 	}
+
+// 	// TODO: Validate project ID.
+
+// 	// TODO: Validate name.
+
+// 	// TODO: Validate properties.
+
+// 	// TODO: Validate button.
+
+// 	// Map to storage type.
+// 	sf := &forms.Form{
+// 		ID:         id,
+// 		ProjectID:  f.ProjectID,
+// 		Name:       f.Name,
+// 		Properties: f.Properties,
+// 		Button:     f.Button,
+// 		Modules:    f.Modules,
+// 	}
+
+// 	// Update in storage.
+// 	sf, err = s.s.Forms.UpdateByID(id, sf)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+
+// 	return f, nil
+// }
 
 // InterfaceToModules takes in an []interface{} and converts it to individual
 // module types.

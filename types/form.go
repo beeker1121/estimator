@@ -23,3 +23,13 @@ type FormButton struct {
 	FontSize        string `json:"font_size"`
 	FontFamily      string `json:"font_family"`
 }
+
+// FormUpdateParams defines the update parameters for forms.
+type FormUpdateParams struct {
+	ID         *string         `json:"id"`
+	ProjectID  *string         `json:"project_id"`
+	Name       *string         `json:"name"`
+	Properties *FormProperties `json:"properties"`
+	Button     *FormButton     `json:"button"`
+	Modules    *[]Module       `json:"modules"`
+}

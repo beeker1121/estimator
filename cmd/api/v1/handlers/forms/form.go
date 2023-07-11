@@ -38,6 +38,16 @@ type Button struct {
 	FontFamily      string `json:"font_family"`
 }
 
+// UpdateParams defines the update parameters.
+type UpdateParams struct {
+	ID         *string       `json:"id"`
+	ProjectID  *string       `json:"project_id"`
+	Name       *string       `json:"name"`
+	Properties *Properties   `json:"properties"`
+	Button     *Button       `json:"button"`
+	Modules    []interface{} `json:"modules"`
+}
+
 // ResultCreate defines the response data for the HandleCreate handler.
 type ResultCreate struct {
 	Data Form `json:"data"`
@@ -208,15 +218,25 @@ func HandleGet(ac *apictx.Context) http.HandlerFunc {
 // HandleUpdate is the HTTP handler function for updating a form.
 func HandleUpdate(ac *apictx.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		// Get the account ID.
+		id := httprouter.GetParam(r, "id")
+
 		// Parse the request body.
-		var f Form
+		var f UpdateParams
 		if err := json.NewDecoder(r.Body).Decode(&f); err != nil {
 			errors.Default(ac.Logger, w, errors.ErrBadRequest)
 			return
 		}
 
-		// Get the form ID.
-		id := httprouter.GetParam(r, "id")
+		// Get this user from the request context.
+		//
+		// TODO: Implement this to verify form update, probably
+		//       via verifying project ownership.
+		// user, err := auth.GetUserFromRequest(r)
+		// if err != nil {
+		// 	errors.Default(ac.Logger, w, errors.ErrInternalServerError)
+		// 	return
+		// }
 
 		// TODO: Get this user from the request context.
 		// TODO: Get the account and role.
@@ -232,21 +252,33 @@ func HandleUpdate(ac *apictx.Context) http.HandlerFunc {
 			return
 		}
 
+		// Map to types.
+		var properties *types.FormProperties
+		if f.Properties != nil {
+			properties = &types.FormProperties{}
+			properties.BackgroundColor = f.Properties.BackgroundColor
+			properties.FontColor = f.Properties.FontColor
+		}
+
+		var button *types.FormButton
+		if f.Button != nil {
+			button = &types.FormButton{}
+			button.BackgroundColor = f.Button.BackgroundColor
+			button.Color = f.Button.Color
+			button.FontSize = f.Button.FontSize
+			button.FontFamily = f.Button.FontFamily
+		}
+
 		// Update the form.
-		sf, err := ac.Services.Forms.UpdateByIDAndUserID(id, "", &types.Form{
-			ProjectID: f.ProjectID,
-			Name:      f.Name,
-			Properties: types.FormProperties{
-				BackgroundColor: f.Properties.BackgroundColor,
-				FontColor:       f.Properties.FontColor,
-			},
-			Button: types.FormButton{
-				BackgroundColor: f.Button.BackgroundColor,
-				Color:           f.Button.Color,
-				FontSize:        f.Button.FontSize,
-				FontFamily:      f.Button.FontFamily,
-			},
-			Modules: modules,
+		//
+		// TODO: Need to handle validation of properties, button,
+		//       and modules fields. Unless we let services handle it.
+		sf, err := ac.Services.Forms.UpdateByIDAndUserID(id, "", &types.FormUpdateParams{
+			ProjectID:  f.ProjectID,
+			Name:       f.Name,
+			Properties: properties,
+			Button:     button,
+			Modules:    &modules,
 		})
 		if pes, ok := err.(*serverrors.ParamErrors); ok && err != nil {
 			errors.Params(ac.Logger, w, http.StatusBadRequest, pes)
