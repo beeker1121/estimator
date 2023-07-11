@@ -24,8 +24,8 @@ const (
 	// stmtInsert defines the SQL statement to
 	// insert a new form into the database.
 	stmtInsert = `
-INSERT INTO forms (id, modules)
-VALUES (?, ?)
+INSERT INTO forms (id, project_id, name, properties, button, modules)
+VALUES (?, ?, ?, ?, ?, ?)
 `
 
 	// stmtGetByID defines the SQL statement to
@@ -46,8 +46,54 @@ WHERE id=?
 
 // Form defines a form.
 type Form struct {
-	ID      string
-	Modules Modules
+	ID         string
+	ProjectID  string
+	Name       string
+	Properties Properties
+	Button     Button
+	Modules    Modules
+}
+
+// Properties defines form properties.
+type Properties struct {
+	Data interface{}
+}
+
+// Value implements the driver interface.
+func (p Properties) Value() (driver.Value, error) {
+	b, err := json.Marshal(p.Data)
+	if err != nil {
+		return nil, err
+	}
+
+	return driver.Value(b), nil
+}
+
+// Scan implements the Scanner interface.
+func (p *Properties) Scan(src any) error {
+	val := src.([]uint8)
+	return json.Unmarshal(val, &p.Data)
+}
+
+// Button defines form button.
+type Button struct {
+	Data interface{}
+}
+
+// Value implements the driver interface.
+func (b Button) Value() (driver.Value, error) {
+	j, err := json.Marshal(b.Data)
+	if err != nil {
+		return nil, err
+	}
+
+	return driver.Value(j), nil
+}
+
+// Scan implements the Scanner interface.
+func (b *Button) Scan(src any) error {
+	val := src.([]uint8)
+	return json.Unmarshal(val, &b.Data)
 }
 
 // Modules defines form modules.
@@ -75,14 +121,22 @@ func (m *Modules) Scan(src any) error {
 func (db *Database) Create(f *forms.Form) (*forms.Form, error) {
 	// Map to local Form type.
 	lf := &Form{
-		ID: f.ID,
+		ID:        f.ID,
+		ProjectID: f.ProjectID,
+		Name:      f.Name,
+		Properties: Properties{
+			Data: f.Properties,
+		},
+		Button: Button{
+			Data: f.Button,
+		},
 		Modules: Modules{
 			Data: f.Modules,
 		},
 	}
 
 	// Execute the query.
-	if _, err := db.db.Exec(stmtInsert, lf.ID, lf.Modules); err != nil {
+	if _, err := db.db.Exec(stmtInsert, lf.ID, lf.ProjectID, lf.Name, lf.Properties, lf.Button, lf.Modules); err != nil {
 		return nil, err
 	}
 
@@ -110,8 +164,12 @@ func (db *Database) GetByID(id string) (*forms.Form, error) {
 
 	// Map to storage form type.
 	gf := &forms.Form{
-		ID:      f.ID,
-		Modules: f.Modules.Data,
+		ID:         f.ID,
+		ProjectID:  f.ProjectID,
+		Name:       f.Name,
+		Properties: f.Properties.Data,
+		Button:     f.Button.Data,
+		Modules:    f.Modules.Data,
 	}
 
 	return gf, nil
@@ -121,7 +179,15 @@ func (db *Database) GetByID(id string) (*forms.Form, error) {
 func (db *Database) UpdateByID(id string, f *forms.Form) (*forms.Form, error) {
 	// Map to local Form type.
 	lf := &Form{
-		ID: id,
+		ID:        id,
+		ProjectID: f.ProjectID,
+		Name:      f.Name,
+		Properties: Properties{
+			Data: f.Properties,
+		},
+		Button: Button{
+			Data: f.Button,
+		},
 		Modules: Modules{
 			Data: f.Modules,
 		},

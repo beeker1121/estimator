@@ -16,8 +16,26 @@ import (
 
 // Form defines the form request/response.
 type Form struct {
-	ID      string        `json:"id"`
-	Modules []interface{} `json:"modules"`
+	ID         string        `json:"id"`
+	ProjectID  string        `json:"project_id"`
+	Name       string        `json:"name"`
+	Properties Properties    `json:"properties"`
+	Button     Button        `json:"button"`
+	Modules    []interface{} `json:"modules"`
+}
+
+// Properties defines the form properties.
+type Properties struct {
+	BackgroundColor string `json:"background_color"`
+	FontColor       string `json:"font_color"`
+}
+
+// Button defines the form button.
+type Button struct {
+	BackgroundColor string `json:"background_color"`
+	Color           string `json:"color"`
+	FontSize        string `json:"font_size"`
+	FontFamily      string `json:"font_family"`
 }
 
 // ResultCreate defines the response data for the HandleCreate handler.
@@ -66,6 +84,18 @@ func HandleCreate(ac *apictx.Context) http.HandlerFunc {
 
 		// Create a new services form.
 		sf, err := ac.Services.Forms.Create(&types.Form{
+			ProjectID: f.ProjectID,
+			Name:      f.Name,
+			Properties: types.FormProperties{
+				BackgroundColor: f.Properties.BackgroundColor,
+				FontColor:       f.Properties.FontColor,
+			},
+			Button: types.FormButton{
+				BackgroundColor: f.Button.BackgroundColor,
+				Color:           f.Button.Color,
+				FontSize:        f.Button.FontSize,
+				FontFamily:      f.Button.FontFamily,
+			},
 			Modules: modules,
 		})
 		if pes, ok := err.(*serverrors.ParamErrors); ok && err != nil {
@@ -79,7 +109,19 @@ func HandleCreate(ac *apictx.Context) http.HandlerFunc {
 
 		// Set form response.
 		fres := Form{
-			ID: sf.ID,
+			ID:        sf.ID,
+			ProjectID: sf.ProjectID,
+			Name:      sf.Name,
+			Properties: Properties{
+				BackgroundColor: sf.Properties.BackgroundColor,
+				FontColor:       sf.Properties.FontColor,
+			},
+			Button: Button{
+				BackgroundColor: sf.Button.BackgroundColor,
+				Color:           sf.Button.Color,
+				FontSize:        sf.Button.FontSize,
+				FontFamily:      sf.Button.FontFamily,
+			},
 		}
 
 		// Get JSON for modules.
@@ -126,8 +168,23 @@ func HandleGet(ac *apictx.Context) http.HandlerFunc {
 		}
 
 		// Map to API form.
+		//
+		// TODO: See if we should match the HandleCreate and HandleUpdate
+		//       way of setting the Modules field.
 		f := &Form{
-			ID:      sf.ID,
+			ID:        sf.ID,
+			ProjectID: sf.ProjectID,
+			Name:      sf.Name,
+			Properties: Properties{
+				BackgroundColor: sf.Properties.BackgroundColor,
+				FontColor:       sf.Properties.FontColor,
+			},
+			Button: Button{
+				BackgroundColor: sf.Button.BackgroundColor,
+				Color:           sf.Button.Color,
+				FontSize:        sf.Button.FontSize,
+				FontFamily:      sf.Button.FontFamily,
+			},
 			Modules: []interface{}{},
 		}
 		for _, v := range sf.Modules {
@@ -177,6 +234,18 @@ func HandleUpdate(ac *apictx.Context) http.HandlerFunc {
 
 		// Update the form.
 		sf, err := ac.Services.Forms.UpdateByIDAndUserID(id, "", &types.Form{
+			ProjectID: f.ProjectID,
+			Name:      f.Name,
+			Properties: types.FormProperties{
+				BackgroundColor: f.Properties.BackgroundColor,
+				FontColor:       f.Properties.FontColor,
+			},
+			Button: types.FormButton{
+				BackgroundColor: f.Button.BackgroundColor,
+				Color:           f.Button.Color,
+				FontSize:        f.Button.FontSize,
+				FontFamily:      f.Button.FontFamily,
+			},
 			Modules: modules,
 		})
 		if pes, ok := err.(*serverrors.ParamErrors); ok && err != nil {
@@ -193,7 +262,19 @@ func HandleUpdate(ac *apictx.Context) http.HandlerFunc {
 
 		// Create a new response form.
 		res := Form{
-			ID: sf.ID,
+			ID:        sf.ID,
+			ProjectID: sf.ProjectID,
+			Name:      sf.Name,
+			Properties: Properties{
+				BackgroundColor: sf.Properties.BackgroundColor,
+				FontColor:       sf.Properties.FontColor,
+			},
+			Button: Button{
+				BackgroundColor: sf.Button.BackgroundColor,
+				Color:           sf.Button.Color,
+				FontSize:        sf.Button.FontSize,
+				FontFamily:      sf.Button.FontFamily,
+			},
 		}
 
 		// Get JSON for modules.

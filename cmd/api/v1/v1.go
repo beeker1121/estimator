@@ -2,6 +2,7 @@ package v1
 
 import (
 	apictx "estimator/cmd/api/context"
+	"estimator/cmd/api/v1/handlers/accounts"
 	"estimator/cmd/api/v1/handlers/forms"
 	"estimator/cmd/api/v1/handlers/login"
 	"estimator/cmd/api/v1/handlers/signup"
@@ -11,6 +12,7 @@ import (
 
 // New creates a new v1 API.
 func New(ac *apictx.Context, r *httprouter.Router) {
+	accounts.New(ac, r)
 	forms.New(ac, r)
 	login.New(ac, r)
 	signup.New(ac, r)

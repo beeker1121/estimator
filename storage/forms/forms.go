@@ -9,6 +9,10 @@ type Database interface {
 
 // Form defines a form.
 type Form struct {
-	ID      string
-	Modules interface{}
+	ID         string
+	ProjectID  string
+	Name       string
+	Properties interface{}
+	Button     interface{}
+	Modules    interface{}
 }

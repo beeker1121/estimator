@@ -40,10 +40,22 @@ func (s *Service) Create(f *types.Form) (*types.Form, error) {
 		f.Modules[i].SetID(uuid.NewString())
 	}
 
+	// TODO: Validate project ID.
+
+	// TODO: Validate name.
+
+	// TODO: Validate properties.
+
+	// TODO: Validate button.
+
 	// Map to storage type.
 	sf := &forms.Form{
-		ID:      f.ID,
-		Modules: f.Modules,
+		ID:         f.ID,
+		ProjectID:  f.ProjectID,
+		Name:       f.Name,
+		Properties: f.Properties,
+		Button:     f.Button,
+		Modules:    f.Modules,
 	}
 
 	// Create in storage.
@@ -65,6 +77,22 @@ func (s *Service) GetByID(id string) (*types.Form, error) {
 		return nil, err
 	}
 
+	// Convert properties.
+	propertiesMap := sf.Properties.(map[string]interface{})
+	properties := types.FormProperties{
+		BackgroundColor: propertiesMap["background_color"].(string),
+		FontColor:       propertiesMap["font_color"].(string),
+	}
+
+	// Convert button.
+	buttonMap := sf.Button.(map[string]interface{})
+	button := types.FormButton{
+		BackgroundColor: buttonMap["background_color"].(string),
+		Color:           buttonMap["color"].(string),
+		FontSize:        buttonMap["font_size"].(string),
+		FontFamily:      buttonMap["font_family"].(string),
+	}
+
 	// Convert interface to modules.
 	m, err := s.InterfaceToModules(sf.Modules.([]interface{}))
 	if err != nil {
@@ -73,8 +101,12 @@ func (s *Service) GetByID(id string) (*types.Form, error) {
 
 	// Create a new Form.
 	f := &types.Form{
-		ID:      sf.ID,
-		Modules: m,
+		ID:         sf.ID,
+		ProjectID:  sf.ProjectID,
+		Name:       sf.Name,
+		Properties: properties,
+		Button:     button,
+		Modules:    m,
 	}
 
 	return f, nil
@@ -92,10 +124,22 @@ func (s *Service) UpdateByIDAndUserID(id, userID string, f *types.Form) (*types.
 		}
 	}
 
+	// TODO: Validate project ID.
+
+	// TODO: Validate name.
+
+	// TODO: Validate properties.
+
+	// TODO: Validate button.
+
 	// Map to storage type.
 	sf := &forms.Form{
-		ID:      id,
-		Modules: f.Modules,
+		ID:         id,
+		ProjectID:  f.ProjectID,
+		Name:       f.Name,
+		Properties: f.Properties,
+		Button:     f.Button,
+		Modules:    f.Modules,
 	}
 
 	// Update in storage.
