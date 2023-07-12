@@ -3,6 +3,7 @@ package services
 import (
 	"estimator/services/accounts"
 	"estimator/services/forms"
+	"estimator/services/projects"
 	"estimator/services/users"
 	"estimator/storage"
 )
@@ -11,6 +12,7 @@ import (
 type Services struct {
 	Accounts *accounts.Service
 	Users    *users.Service
+	Projects *projects.Service
 	Forms    *forms.Service
 }
 
@@ -19,6 +21,7 @@ func New(s *storage.Storage) *Services {
 	return &Services{
 		Accounts: accounts.New(s),
 		Users:    users.New(s),
+		Projects: projects.New(s),
 		Forms:    forms.New(s),
 	}
 }

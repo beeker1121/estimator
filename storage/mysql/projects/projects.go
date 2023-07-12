@@ -1,10 +1,10 @@
-package accounts
+package projects
 
 import (
 	"database/sql"
 	"fmt"
 
-	"estimator/storage/accounts"
+	"estimator/storage/projects"
 )
 
 // Database defines the database.
@@ -21,82 +21,95 @@ func New(db *sql.DB) *Database {
 
 const (
 	// stmtInsert defines the SQL statement to
-	// insert a new account into the database.
+	// insert a new project into the database.
 	stmtInsert = `
-INSERT INTO accounts (id, name)
-VALUES (?, ?)
+INSERT INTO projects (id, account_id, name)
+VALUES (?, ?, ?)
 `
 
 	// stmtGetByID defines the SQL statement to
-	// get an account from the database.
+	// get an project from the database.
 	stmtGetByID = `
-SELECT * FROM accounts
+SELECT * FROM projects
 WHERE id=?
 `
 
 	// stmtUpdateByID defines the SQL statement
-	// to update an account by the given ID.
+	// to update an project by the given ID.
 	stmtUpdateByID = `
-UPDATE accounts
+UPDATE projects
 SET %s
 WHERE id=?
 `
 )
 
-// Account defines an account.
-type Account struct {
-	ID   string
-	Name string
+// Project defines an project.
+type Project struct {
+	ID        string
+	AccountID string
+	Name      string
 }
 
-// Create creates a new account.
-func (db *Database) Create(a *accounts.Account) (*accounts.Account, error) {
-	// Map to local Account type.
-	la := &Account{
-		ID:   a.ID,
-		Name: a.Name,
+// Create creates a new project.
+func (db *Database) Create(p *projects.Project) (*projects.Project, error) {
+	// Map to local Project type.
+	lp := &Project{
+		ID:        p.ID,
+		AccountID: p.AccountID,
+		Name:      p.Name,
 	}
 
 	// Execute the query.
-	if _, err := db.db.Exec(stmtInsert, la.ID, la.Name); err != nil {
+	if _, err := db.db.Exec(stmtInsert, lp.ID, lp.AccountID, lp.Name); err != nil {
 		return nil, err
 	}
 
-	return a, nil
+	return p, nil
 }
 
-// GetByID gets an account by the given ID.
-func (db *Database) GetByID(id string) (*accounts.Account, error) {
-	// Create a new Account.
-	a := &Account{}
+// GetByID gets an project by the given ID.
+func (db *Database) GetByID(id string) (*projects.Project, error) {
+	// Create a new Project.
+	p := &Project{}
 
 	// Execute the query.
 	row := db.db.QueryRow(stmtGetByID, id)
 
-	// Map columns to account.
-	err := row.Scan(&a.ID, &a.Name)
+	// Map columns to project.
+	err := row.Scan(&p.ID, &p.AccountID, &p.Name)
 	switch {
 	case err == sql.ErrNoRows:
-		return nil, accounts.ErrAccountNotFound
+		return nil, projects.ErrProjectNotFound
 	case err != nil:
 		return nil, err
 	}
 
-	// Map to storage account type.
-	sa := &accounts.Account{
-		ID:   a.ID,
-		Name: a.Name,
+	// Map to storage project type.
+	sp := &projects.Project{
+		ID:   p.ID,
+		Name: p.Name,
 	}
 
-	return sa, nil
+	return sp, nil
 }
 
 // UpdateByID a form by the given ID.
-func (db *Database) UpdateByID(id string, up *accounts.UpdateParams) (*accounts.Account, error) {
+func (db *Database) UpdateByID(id string, up *projects.UpdateParams) (*projects.Project, error) {
 	// Create variables to hold the query fields
 	// being updated and their new values.
 	var queryFields string
 	var queryValues []interface{}
+
+	// Handle account ID.
+	if up.AccountID != nil {
+		if queryFields == "" {
+			queryFields = "account_id=?"
+		} else {
+			queryFields += ", account_id=?"
+		}
+
+		queryValues = append(queryValues, *up.AccountID)
+	}
 
 	// Handle name field.
 	if up.Name != nil {
@@ -126,7 +139,7 @@ func (db *Database) UpdateByID(id string, up *accounts.UpdateParams) (*accounts.
 
 	// Since the GetByID method is straight forward,
 	// we can use this method to retrieve the updated
-	// account. Anything more complicated should use the
+	// project. Anything more complicated should use the
 	// original statement constants.
 	return db.GetByID(id)
 }

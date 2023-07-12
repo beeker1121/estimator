@@ -257,7 +257,7 @@ func (db *Database) UpdateByID(id string, up *users.UpdateParams) (*users.User, 
 
 	// Since the GetByID method is straight forward,
 	// we can use this method to retrieve the updated
-	// todo. Anything more complicated should use the
+	// user. Anything more complicated should use the
 	// original statement constants.
 	return db.GetByID(id)
 }
