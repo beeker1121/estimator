@@ -110,8 +110,9 @@ func (db *Database) GetByID(id string) (*projects.Project, error) {
 
 	// Map to storage project type.
 	sp := &projects.Project{
-		ID:   p.ID,
-		Name: p.Name,
+		ID:        p.ID,
+		AccountID: p.AccountID,
+		Name:      p.Name,
 	}
 
 	return sp, nil
