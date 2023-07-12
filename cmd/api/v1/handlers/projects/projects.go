@@ -37,12 +37,33 @@ type ResultUpdate struct {
 	Data Project `json:"data"`
 }
 
+// Meta defines the response top level meta object.
+type Meta struct {
+	Offset int `json:"offset"`
+	Limit  int `json:"limit"`
+	Total  int `json:"total"`
+}
+
+// Links defines the response top level links object.
+type Links struct {
+	Prev *string `json:"prev"`
+	Next *string `json:"next"`
+}
+
+// ResultSearch defines the response data for the HandleSearch handler.
+type ResultSearch struct {
+	Data  []Project `json:"data"`
+	Meta  Meta      `json:"meta"`
+	Links Links     `json:"links"`
+}
+
 // New creates a new project handler.
 func New(ac *apictx.Context, router *httprouter.Router) {
 	// Handle the routes.
 	router.POST("/api/v1/project", HandleCreate(ac))
 	router.GET("/api/v1/project/:id", HandleGet(ac))
 	router.POST("/api/v1/project/:id", HandleUpdate(ac))
+	router.POST("/api/v1/projects", HandleSearch(ac))
 }
 
 // HandleCreate is the HTTP handler function for creating a project.
@@ -54,6 +75,15 @@ func HandleCreate(ac *apictx.Context) http.HandlerFunc {
 			errors.Default(ac.Logger, w, errors.ErrBadRequest)
 			return
 		}
+
+		// Get this user from the request context.
+		//
+		// TODO: Implement.
+		// user, err := auth.GetUserFromRequest(r)
+		// if err != nil {
+		// 	errors.Default(ac.Logger, w, errors.ErrInternalServerError)
+		// 	return
+		// }
 
 		// Create a new services project.
 		sp, err := ac.Services.Projects.Create(&types.Project{
@@ -149,7 +179,7 @@ func HandleUpdate(ac *apictx.Context) http.HandlerFunc {
 		}
 
 		// Update the project.
-		sa, err := ac.Services.Projects.UpdateByIDAndUserID(id, user.ID, &types.ProjectUpdateParams{
+		sp, err := ac.Services.Projects.UpdateByIDAndUserID(id, user.ID, &types.ProjectUpdateParams{
 			AccountID: p.AccountID,
 			Name:      p.Name,
 		})
@@ -165,12 +195,77 @@ func HandleUpdate(ac *apictx.Context) http.HandlerFunc {
 		// Create a new result.
 		result := ResultUpdate{
 			Data: Project{
-				ID:   sa.ID,
-				Name: sa.Name,
+				ID:   sp.ID,
+				Name: sp.Name,
 			},
 		}
 
 		// Respond with JSON.
+		if err := response.JSON(w, true, result); err != nil {
+			ac.Logger.Printf("render.JSON() error: %s\n", err)
+			errors.Default(ac.Logger, w, errors.ErrInternalServerError)
+			return
+		}
+	}
+}
+
+// HandleSearch is the HTTP handler function for searching for projects.
+func HandleSearch(ac *apictx.Context) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// Parse the request body.
+		var p types.ProjectGetParams
+		if err := json.NewDecoder(r.Body).Decode(&p); err != nil {
+			errors.Default(ac.Logger, w, errors.ErrBadRequest)
+			return
+		}
+
+		// Get this user from the request context.
+		//
+		// TODO: Implement.
+		// user, err := auth.GetUserFromRequest(r)
+		// if err != nil {
+		// 	errors.Default(ac.Logger, w, errors.ErrInternalServerError)
+		// 	return
+		// }
+
+		// Get projects.
+		sp, err := ac.Services.Projects.Get(&types.ProjectGetParams{
+			ID:        p.ID,
+			AccountID: p.AccountID,
+			Name:      p.Name,
+		})
+		if pes, ok := err.(*serverrors.ParamErrors); ok && err != nil {
+			errors.Params(ac.Logger, w, http.StatusBadRequest, pes)
+			return
+		} else if err != nil {
+			ac.Logger.Printf("projects.UpdateByID() service error: %s\n", err)
+			errors.Default(ac.Logger, w, errors.ErrInternalServerError)
+			return
+		}
+
+		// Create a new result.
+		result := ResultSearch{
+			Data: []Project{},
+			Meta: Meta{
+				Offset: p.Offset,
+				Limit:  p.Limit,
+				Total:  sp.Total,
+			},
+			Links: Links{},
+		}
+		for _, v := range sp.Projects {
+			result.Data = append(result.Data, Project{
+				ID:        v.ID,
+				AccountID: v.AccountID,
+				Name:      v.Name,
+			})
+		}
+
+		// TODO: Handle previous link.
+
+		// TODO: Handle next link.
+
+		// Render output.
 		if err := response.JSON(w, true, result); err != nil {
 			ac.Logger.Printf("render.JSON() error: %s\n", err)
 			errors.Default(ac.Logger, w, errors.ErrInternalServerError)

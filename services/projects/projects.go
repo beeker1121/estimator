@@ -65,6 +65,38 @@ func (s *Service) Create(p *types.Project) (*types.Project, error) {
 	return p, nil
 }
 
+// GetByID gets a set of projects.
+func (s *Service) Get(gp *types.ProjectGetParams) (*types.Projects, error) {
+	// Map to storage type.
+	sgp := &projects.GetParams{
+		AccountID: gp.AccountID,
+		Name:      gp.Name,
+		Offset:    gp.Offset,
+		Limit:     gp.Limit,
+	}
+
+	// Try to pull the projects from the database.
+	sp, err := s.s.Projects.Get(sgp)
+	if err != nil {
+		return nil, err
+	}
+
+	// Map to project type.
+	p := &types.Projects{
+		Projects: []*types.Project{},
+		Total:    sp.Total,
+	}
+	for _, v := range sp.Projects {
+		p.Projects = append(p.Projects, &types.Project{
+			ID:        v.ID,
+			AccountID: v.AccountID,
+			Name:      v.Name,
+		})
+	}
+
+	return p, nil
+}
+
 // GetByID gets a project by the given ID.
 func (s *Service) GetByID(id string) (*types.Project, error) {
 	// Try to pull this project from the database.
